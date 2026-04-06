@@ -11,6 +11,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
@@ -42,7 +43,7 @@ target_include_directories(scan_tracker PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(scan_tracker PUBLIC cxx_std_17)
-ament_target_dependencies(scan_tracker rclcpp sensor_msgs )
+ament_target_dependencies(scan_tracker rclcpp sensor_msgs std_msgs)
 
 install(TARGETS scan_tracker
   DESTINATION lib/${PROJECT_NAME})

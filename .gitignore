@@ -1,0 +1,17 @@
+# colcon build artifacts (all workspaces)
+build/
+install/
+log/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Backup files
+*.bak
+*.backup
+
+# Editor
+.vscode/
+*.swp

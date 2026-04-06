@@ -1,47 +1,44 @@
 #!/usr/bin/env python3
 """
-rw_viz.py — Real-world LD19 visualizer
-=======================================
+rw_viz.py — Real-world RPLIDAR visualizer
+==========================================
 Displays a live top-down view of the board with:
-• raw LIDAR scan points (white dots)
-• board boundary rectangle (green dashed line)
-• detected ball centroids (red filled circles)
-• incrementing ball counter (top-right overlay)
+  • raw LIDAR scan points (white dots)
+  • board boundary rectangle (green dashed line)
+  • detected ball centroids (red filled circles)
+  • incrementing ball counter and scan-receive diagnostic
 
 Topics consumed
-/scan sensor_msgs/LaserScan — raw LD19 data
-/ball_count std_msgs/Int32 — running total from scan_tracker
-/ball_positions std_msgs/Float32MultiArray — centroid flat array [x1,y1,…]
+  /scan             sensor_msgs/LaserScan        — raw scan data
+  /ball_count       std_msgs/Int32               — running total from scan_tracker
+  /ball_positions   std_msgs/Float32MultiArray   — centroid flat array [x1,y1,…]
 
-Run after sourcing both workspaces (see start_real_world.sh).
+ROS2 parameters (set from real_world.launch.py — edit there, not here)
+  board_min_x / board_max_x / board_min_y / board_max_y  (metres, sensor frame)
+  lidar_offset_x / lidar_offset_y  (metres, default 0,0)
+
+Coordinate frame (sensor frame, same as scan_tracker)
+  +X  → into the board (depth, long axis, away from LIDAR)
+  +Y  → left across the board (lateral, short axis)
+  Origin = LIDAR scan centre
 """
 
 import math
-import threading
+
+import numpy as np
 
 import rclpy
+from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Int32, Float32MultiArray
 
 import matplotlib
-matplotlib.use("TkAgg") # use TkAgg so the window runs on the main thread
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.animation import FuncAnimation
-
-# ── Plot limits (see VIZ_ORIENTATION_FIX.md) ────────────────────────────────
-# sensor-X → horizontal (board width), -sensor-Y → vertical (board depth, inverted)
-PLOT_X_MIN = -0.28   # horizontal: just past board right (sensor X)
-PLOT_X_MAX = 0.28    # horizontal: just past board left (sensor X)
-PLOT_Y_MIN = -0.05   # vertical: small gap above LIDAR (-sensor Y)
-PLOT_Y_MAX = 0.95    # vertical: small gap past far board edge
-
-# ── Board rectangle in plot coordinates (x=sensor_X, y=-sensor_Y) ──────────
-BOARD_MIN_X = -0.19           # left edge of board (sensor X)
-BOARD_MAX_X = 0.19            # right edge of board (sensor X)
-BOARD_MIN_Y = -0.190  # left edge of board (sensor Y)
-BOARD_MAX_Y = 0.190   # right edge of board (sensor Y)
 
 
 class RwVizNode(Node):
@@ -49,24 +46,37 @@ class RwVizNode(Node):
     def __init__(self):
         super().__init__("rw_viz")
 
-        # Shared state written by ROS callbacks, read by matplotlib main thread.
-        # Use a simple lock to avoid torn reads on CPython (belt-and-suspenders).
-        self._lock = threading.Lock()
-        self._scan_xs: list[float] = []
-        self._scan_ys: list[float] = []
-        self._ball_xs: list[float] = []
-        self._ball_ys: list[float] = []
-        self._ball_count: int = 0
+        # ── Board / LIDAR geometry params ──────────────────────────────────────
+        self.declare_parameter("board_min_x",    0.050)
+        self.declare_parameter("board_max_x",    0.860)
+        self.declare_parameter("board_min_y",   -0.190)
+        self.declare_parameter("board_max_y",    0.190)
+        self.declare_parameter("lidar_offset_x", 0.0)
+        self.declare_parameter("lidar_offset_y", 0.0)
 
-        # ── Subscriptions ────────────────────────────────────────────────────
-        self.create_subscription(LaserScan, "/scan",
-                                 self._on_scan, 10)
-        self.create_subscription(Int32, "/ball_count",
-                                 self._on_count, 10)
-        self.create_subscription(Float32MultiArray, "/ball_positions",
-                                 self._on_positions, 10)
+        # ── Scan data (updated by ROS callbacks, read by animation) ───────────
+        self.scan_xs: list[float] = []
+        self.scan_ys: list[float] = []
+        self.ball_xs: list[float] = []
+        self.ball_ys: list[float] = []
+        self.ball_count: int = 0
+        self.scan_msg_count: int = 0   # diagnostic counter
 
-    # ── Callbacks ──────────────────────────────────────────────────────────
+        # ── Subscriptions ──────────────────────────────────────────────────────
+        # BEST_EFFORT matches what sllidar_node sends on the wire.
+        scan_qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+        )
+        self.create_subscription(LaserScan,         "/scan",           self._on_scan,      scan_qos)
+        self.create_subscription(Int32,             "/ball_count",     self._on_count,     10)
+        self.create_subscription(Float32MultiArray, "/ball_positions", self._on_positions, 10)
+
+        self.get_logger().info("rw_viz ready — waiting for /scan …")
+
+    # ── ROS callbacks ──────────────────────────────────────────────────────────
+    # These run on the main thread via spin_once() inside the animation update.
 
     def _on_scan(self, msg: LaserScan):
         xs, ys = [], []
@@ -78,126 +88,162 @@ class RwVizNode(Node):
             theta = msg.angle_min + i * msg.angle_increment
             xs.append(r * math.cos(theta))
             ys.append(r * math.sin(theta))
-        with self._lock:
-            self._scan_xs = xs
-            self._scan_ys = ys
+        self.scan_xs = xs
+        self.scan_ys = ys
+        self.scan_msg_count += 1
 
     def _on_count(self, msg: Int32):
-        with self._lock:
-            self._ball_count = msg.data
+        self.ball_count = msg.data
 
     def _on_positions(self, msg: Float32MultiArray):
         data = msg.data
-        # flat [x1, y1, x2, y2, ...]
         xs, ys = [], []
         for i in range(0, len(data) - 1, 2):
             xs.append(float(data[i]))
             ys.append(float(data[i + 1]))
-        with self._lock:
-            self._ball_xs = xs
-            self._ball_ys = ys
+        self.ball_xs = xs
+        self.ball_ys = ys
 
-    # ── Snapshot for the drawing thread ──────────────────────────────────────
-
-    def snapshot(self):
-        with self._lock:
-            return (
-                list(self._scan_xs),
-                list(self._scan_ys),
-                list(self._ball_xs),
-                list(self._ball_ys),
-                self._ball_count,
-            )
+    def board_params(self):
+        return (
+            self.get_parameter("board_min_x").value,
+            self.get_parameter("board_max_x").value,
+            self.get_parameter("board_min_y").value,
+            self.get_parameter("board_max_y").value,
+            self.get_parameter("lidar_offset_x").value,
+            self.get_parameter("lidar_offset_y").value,
+        )
 
 
-def build_figure():
-    """Create and return the matplotlib figure and artist objects to update."""
-    fig, ax = plt.subplots(figsize=(10, 5))
-    fig.patch.set_facecolor("#111111")
-    ax.set_facecolor("#111111")
+def build_figure(board_min_x, board_max_x, board_min_y, board_max_y,
+                 lidar_offset_x, lidar_offset_y):
+    board_w  = board_max_x - board_min_x
+    board_h  = board_max_y - board_min_y
+    margin_x = board_w * 0.14
+    margin_y = board_h * 0.28
 
-    ax.set_xlim(PLOT_X_MIN, PLOT_X_MAX)  # sensor X on horizontal (board width)
-    ax.set_ylim(PLOT_Y_MIN, PLOT_Y_MAX)  # sensor Y on vertical (board depth)
+    fig, ax = plt.subplots(figsize=(11, 6))
+    fig.patch.set_facecolor("#0d0d0d")
+    ax.set_facecolor("#0d0d0d")
 
+    ax.set_xlim(board_min_x - margin_x, board_max_x + margin_x)
+    ax.set_ylim(board_min_y - margin_y, board_max_y + margin_y)
     ax.set_aspect("equal")
-    ax.set_xlabel("← board right X (m) board left →", color="#888888")
-    ax.set_ylabel("board depth (m)\n← near (LIDAR) far →", color="#888888")
-    ax.set_title("LD19 Real-World View (top-down)", color="white", fontsize=12)
-    ax.tick_params(colors="white")
+    ax.set_xlabel("X — depth into board (m)", color="#888888", fontsize=9)
+    ax.set_ylabel("Y — lateral across board (m)", color="#888888", fontsize=9)
+    ax.set_title("RPLIDAR A1-M8 — Live Board View (top-down)", color="white", fontsize=12, pad=10)
+    ax.tick_params(colors="#666666", labelsize=8)
     for spine in ax.spines.values():
-        spine.set_edgecolor("#444444")
+        spine.set_edgecolor("#333333")
 
-    # Board boundary rectangle (dashed green) — (x=sensor_X, y=-sensor_Y)
+    # Board boundary
     board_rect = mpatches.FancyBboxPatch(
-        (BOARD_MIN_X, BOARD_MIN_Y),  # (x=sensor_X, y=sensor_Y)
-        BOARD_MAX_X - BOARD_MIN_X,  # width = X span
-        BOARD_MAX_Y - BOARD_MIN_Y,  # height = Y span
+        (board_min_x, board_min_y), board_w, board_h,
         boxstyle="square,pad=0",
-        linewidth=1.5, edgecolor="#00cc44", facecolor="none",
-        linestyle="--", label="Board boundary",
+        linewidth=1.8, edgecolor="#00e64d", facecolor="#00e64d08",
+        linestyle="--", label="Board boundary", zorder=2,
     )
     ax.add_patch(board_rect)
 
-    # LIDAR origin marker — downward triangle (pointing into board)
-    ax.plot(0, 0, marker="v", color="#ffcc00", markersize=10, zorder=5,
-            label="LIDAR origin")
+    # Dimension annotations
+    ax.annotate(f"{board_w*100:.0f} cm",
+                xy=((board_min_x + board_max_x) / 2, board_max_y),
+                xytext=(0, 8), textcoords="offset points",
+                ha="center", va="bottom", color="#00e64d", fontsize=8)
+    ax.annotate(f"{board_h*100:.0f} cm",
+                xy=(board_max_x, (board_min_y + board_max_y) / 2),
+                xytext=(6, 0), textcoords="offset points",
+                ha="left", va="center", color="#00e64d", fontsize=8, rotation=90)
 
-    # Scan point scatter (white)
-    scan_scatter = ax.scatter([], [], s=2, color="white", alpha=0.6,
+    # LIDAR marker
+    ax.plot(lidar_offset_x, lidar_offset_y,
+            marker="^", color="#ffcc00", markersize=11, zorder=7,
+            label="LIDAR origin", markeredgecolor="#000000", markeredgewidth=0.8)
+
+    # Scan points
+    scan_scatter = ax.scatter([], [], s=2, color="white", alpha=0.55,
                               label="Scan points", zorder=3)
-
-    # Ball centroid scatter (red)
-    ball_scatter = ax.scatter([], [], s=120, color="#ff3333", alpha=0.9,
-                              edgecolors="white", linewidths=0.8,
+    # Ball centroids
+    ball_scatter = ax.scatter([], [], s=140, color="#ff3333", alpha=0.95,
+                              edgecolors="white", linewidths=1.0,
                               label="Ball centroids", zorder=6)
 
-    # Counter text (top-right corner of the axes)
+    # Ball counter
     counter_text = ax.text(
-        0.98, 0.95, "Balls: 0",
-        transform=ax.transAxes,
-        fontsize=18, color="#ffcc00",
-        ha="right", va="top",
-        fontweight="bold",
+        0.98, 0.97, "Balls: 0",
+        transform=ax.transAxes, fontsize=20, color="#ffcc00",
+        ha="right", va="top", fontweight="bold",
     )
 
-    ax.legend(loc="upper left", facecolor="#222222", edgecolor="#555555",
-              labelcolor="white", fontsize=8)
+    # Diagnostic counter (shows whether /scan is being received)
+    diag_text = ax.text(
+        0.98, 0.04, "Scans: 0",
+        transform=ax.transAxes, fontsize=8, color="#555555",
+        ha="right", va="bottom",
+    )
 
-    return fig, scan_scatter, ball_scatter, counter_text
+    ax.legend(loc="upper left", facecolor="#1a1a1a", edgecolor="#444444",
+              labelcolor="white", fontsize=8, framealpha=0.85)
+    fig.tight_layout()
+    return fig, scan_scatter, ball_scatter, counter_text, diag_text
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = RwVizNode()
 
-    # Spin ROS in a background thread so matplotlib can own the main thread
-    ros_thread = threading.Thread(target=rclpy.spin, args=(node,), daemon=True)
-    ros_thread.start()
+    # Use a SingleThreadedExecutor — spin_once() will be called directly
+    # inside the matplotlib animation update, on the main thread.
+    # This avoids all background-thread issues when launched via ros2 launch.
+    executor = SingleThreadedExecutor()
+    executor.add_node(node)
 
-    fig, scan_scatter, ball_scatter, counter_text = build_figure()
+    board_min_x, board_max_x, board_min_y, board_max_y, \
+        lidar_offset_x, lidar_offset_y = node.board_params()
+
+    node.get_logger().info(
+        f"rw_viz: board X[{board_min_x:.3f}, {board_max_x:.3f}]  "
+        f"Y[{board_min_y:.3f}, {board_max_y:.3f}]  "
+        f"LIDAR offset ({lidar_offset_x:.3f}, {lidar_offset_y:.3f})"
+    )
+
+    fig, scan_scatter, ball_scatter, counter_text, diag_text = build_figure(
+        board_min_x, board_max_x, board_min_y, board_max_y,
+        lidar_offset_x, lidar_offset_y,
+    )
 
     def update(_frame):
-        scan_xs, scan_yscan_ys, ball_xs, ball_ysall_ys, count = node.snapshot()
+        # Process any pending ROS callbacks right here in the main thread.
+        # timeout_sec=0 means: handle whatever is ready now, return immediately.
+        executor.spin_once(timeout_sec=0)
 
-        if scan_xs:
-            scan_scatter.set_offsets(list(zip(scan_xs, scan_ys)))  # (sensor_X, sensor_Y)
+        # Draw scan points
+        if node.scan_xs:
+            scan_scatter.set_offsets(np.column_stack([node.scan_xs, node.scan_ys]))
         else:
-            scan_scatter.set_offsets([])
+            scan_scatter.set_offsets(np.empty((0, 2)))
 
-        if ball_xs:
-            ball_scatter.set_offsets(list(zip(ball_xs, ball_ys)))  # (sensor_X, sensor_Y)
+        # Draw ball centroids
+        if node.ball_xs:
+            ball_scatter.set_offsets(np.column_stack([node.ball_xs, node.ball_ys]))
         else:
-            ball_scatter.set_offsets([])
+            ball_scatter.set_offsets(np.empty((0, 2)))
 
-        counter_text.set_text(f"Balls: {count}")
-        return scan_scatter, ball_scatter, counter_text
+        counter_text.set_text(f"Balls: {node.ball_count}")
 
-    # Animate at ~25 fps; blit=True redraws only changed artists
-    _anim = FuncAnimation(fig, update, interval=40, blit=True, cache_frame_data=False)
+        # Diagnostic: colour changes green once data flows, stays red if not
+        if node.scan_msg_count > 0:
+            diag_text.set_text(f"Scans: {node.scan_msg_count}")
+            diag_text.set_color("#00cc66")
+        else:
+            diag_text.set_text("Scans: 0 — waiting for /scan …")
+            diag_text.set_color("#cc3333")
 
-    plt.tight_layout()
+    _anim = FuncAnimation(fig, update, interval=40, blit=False, cache_frame_data=False)
+
     plt.show()
 
+    executor.shutdown()
     node.destroy_node()
     rclpy.shutdown()
 
