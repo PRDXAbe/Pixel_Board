@@ -1,0 +1,6 @@
+setup.py
+adapt_display/__init__.py
+adapt_display.egg-info/PKG-INFO
+adapt_display.egg-info/SOURCES.txt
+adapt_display.egg-info/dependency_links.txt
+adapt_display.egg-info/top_level.txt

@@ -1,0 +1,73 @@
+[0.000000] (-) TimerEvent: {}
+[0.000241] (-) JobUnselected: {'identifier': 'ldlidar_stl_ros2'}
+[0.000331] (adapt_display) JobQueued: {'identifier': 'adapt_display', 'dependencies': OrderedDict()}
+[0.000374] (adapt_display) JobStarted: {'identifier': 'adapt_display'}
+[0.006414] (adapt_display) JobProgress: {'identifier': 'adapt_display', 'progress': 'cmake'}
+[0.006745] (adapt_display) JobProgress: {'identifier': 'adapt_display', 'progress': 'build'}
+[0.007118] (adapt_display) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display', '--', '-j12', '-l12'], 'cwd': '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('LANGUAGE', 'en_IN:en'), ('USER', 'abhinav'), ('XDG_SESSION_TYPE', 'wayland'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/abhinav'), ('OLDPWD', '/home/abhinav/Projects/Magic_Board'), ('DESKTOP_SESSION', 'ubuntu'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('SYSTEMD_EXEC_PID', '2070'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('IM_CONFIG_PHASE', '1'), ('WAYLAND_DISPLAY', 'wayland-0'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'abhinav'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'abhinav'), ('TERM', 'xterm-256color'), ('GAZEBO_MODEL_PATH', ':/opt/ros/humble/share/turtlebot3_gazebo/models'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/home/abhinav/.local/bin:/opt/ros/humble/bin:/home/abhinav/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/abhinav/.spicetify:/home/abhinav/.spicetify:/home/abhinav/Android/Sdk/tools:/home/abhinav/Android/Sdk/platform-tools'), ('SESSION_MANAGER', 'local/abhinav-ASUS-TUF-Gaming-A16-FA607NUG-FA607NUG:@/tmp/.ICE-unix/2043,unix/abhinav-ASUS-TUF-Gaming-A16-FA607NUG-FA607NUG:/tmp/.ICE-unix/2043'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/a2d1ab4a_80a3_48cb_9848_0ce3ccddb27f'), ('GNOME_SETUP_DISPLAY', ':1'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('DISPLAY', ':0'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/.mutter-Xwaylandauth.WRGUM3'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('GNOME_TERMINAL_SERVICE', ':1.238'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('SHELL', '/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display'), ('TURTLEBOT3_MODEL', 'burger'), ('LC_ALL', 'en_US.UTF-8'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('ANDROID_HOME', '/home/abhinav/Android/Sdk'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/home/abhinav/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[0.053169] (adapt_display) StdoutLine: {'line': b'\x1b[35m\x1b[1mConsolidate compiler generated dependencies of target scan_tracker\x1b[0m\n'}
+[0.066861] (adapt_display) StdoutLine: {'line': b'[ 50%] Built target cpp_node\n'}
+[0.068310] (adapt_display) StdoutLine: {'line': b'[ 50%] Built target ament_cmake_python_copy_adapt_display\n'}
+[0.072612] (adapt_display) StdoutLine: {'line': b'[ 75%] \x1b[32mBuilding CXX object CMakeFiles/scan_tracker.dir/src/scan_tracker.cpp.o\x1b[0m\n'}
+[0.099187] (-) TimerEvent: {}
+[0.199474] (-) TimerEvent: {}
+[0.262071] (adapt_display) StdoutLine: {'line': b'running egg_info\n'}
+[0.262607] (adapt_display) StdoutLine: {'line': b'writing adapt_display.egg-info/PKG-INFO\n'}
+[0.262850] (adapt_display) StdoutLine: {'line': b'writing dependency_links to adapt_display.egg-info/dependency_links.txt\n'}
+[0.262996] (adapt_display) StdoutLine: {'line': b'writing top-level names to adapt_display.egg-info/top_level.txt\n'}
+[0.264449] (adapt_display) StdoutLine: {'line': b"reading manifest file 'adapt_display.egg-info/SOURCES.txt'\n"}
+[0.264926] (adapt_display) StdoutLine: {'line': b"writing manifest file 'adapt_display.egg-info/SOURCES.txt'\n"}
+[0.290744] (adapt_display) StdoutLine: {'line': b'[ 75%] Built target ament_cmake_python_build_adapt_display_egg\n'}
+[0.299591] (-) TimerEvent: {}
+[0.399941] (-) TimerEvent: {}
+[0.500391] (-) TimerEvent: {}
+[0.600739] (-) TimerEvent: {}
+[0.701098] (-) TimerEvent: {}
+[0.801454] (-) TimerEvent: {}
+[0.901821] (-) TimerEvent: {}
+[1.002171] (-) TimerEvent: {}
+[1.102531] (-) TimerEvent: {}
+[1.202905] (-) TimerEvent: {}
+[1.303339] (-) TimerEvent: {}
+[1.403708] (-) TimerEvent: {}
+[1.504068] (-) TimerEvent: {}
+[1.604408] (-) TimerEvent: {}
+[1.643291] (adapt_display) StderrLine: {'line': b'\x1b[01m\x1b[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:\x1b[m\x1b[K In constructor \xe2\x80\x98\x1b[01m\x1b[KScanTrackerNode::ScanTrackerNode()\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[1.643619] (adapt_display) StderrLine: {'line': b'\x1b[01m\x1b[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:45:5:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kcount_publisher_\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope; did you mean \xe2\x80\x98\x1b[01m\x1b[Kcount_publishers\x1b[m\x1b[K\xe2\x80\x99?\n'}
+[1.643738] (adapt_display) StderrLine: {'line': b'   45 |     \x1b[01;31m\x1b[Kcount_publisher_\x1b[m\x1b[K = this->create_publisher<std_msgs::msg::Int32>(\n'}
+[1.643829] (adapt_display) StderrLine: {'line': b'      |     \x1b[01;31m\x1b[K^~~~~~~~~~~~~~~~\x1b[m\x1b[K\n'}
+[1.643899] (adapt_display) StderrLine: {'line': b'      |     \x1b[32m\x1b[Kcount_publishers\x1b[m\x1b[K\n'}
+[1.650608] (adapt_display) StderrLine: {'line': b'\x1b[01m\x1b[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:47:5:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kpositions_publisher_\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope\n'}
+[1.650767] (adapt_display) StderrLine: {'line': b'   47 |     \x1b[01;31m\x1b[Kpositions_publisher_\x1b[m\x1b[K = this->create_publisher<std_msgs::msg::Float32MultiArray>(\n'}
+[1.650872] (adapt_display) StderrLine: {'line': b'      |     \x1b[01;31m\x1b[K^~~~~~~~~~~~~~~~~~~~\x1b[m\x1b[K\n'}
+[1.661524] (adapt_display) StderrLine: {'line': b'\x1b[01m\x1b[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:\x1b[m\x1b[K In member function \xe2\x80\x98\x1b[01m\x1b[Kvoid ScanTrackerNode::scan_callback(sensor_msgs::msg::LaserScan_<std::allocator<void> >::SharedPtr)\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[1.661695] (adapt_display) StderrLine: {'line': b'\x1b[01m\x1b[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:243:5:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kcount_publisher_\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope; did you mean \xe2\x80\x98\x1b[01m\x1b[Kcount_publishers\x1b[m\x1b[K\xe2\x80\x99?\n'}
+[1.661795] (adapt_display) StderrLine: {'line': b'  243 |     \x1b[01;31m\x1b[Kcount_publisher_\x1b[m\x1b[K->publish(count_msg);\n'}
+[1.661873] (adapt_display) StderrLine: {'line': b'      |     \x1b[01;31m\x1b[K^~~~~~~~~~~~~~~~\x1b[m\x1b[K\n'}
+[1.661943] (adapt_display) StderrLine: {'line': b'      |     \x1b[32m\x1b[Kcount_publishers\x1b[m\x1b[K\n'}
+[1.667301] (adapt_display) StderrLine: {'line': b'\x1b[01m\x1b[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:252:5:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kpositions_publisher_\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope\n'}
+[1.667456] (adapt_display) StderrLine: {'line': b'  252 |     \x1b[01;31m\x1b[Kpositions_publisher_\x1b[m\x1b[K->publish(pos_msg);\n'}
+[1.667548] (adapt_display) StderrLine: {'line': b'      |     \x1b[01;31m\x1b[K^~~~~~~~~~~~~~~~~~~~\x1b[m\x1b[K\n'}
+[1.704548] (-) TimerEvent: {}
+[1.804916] (-) TimerEvent: {}
+[1.905270] (-) TimerEvent: {}
+[2.005719] (-) TimerEvent: {}
+[2.106089] (-) TimerEvent: {}
+[2.206466] (-) TimerEvent: {}
+[2.306840] (-) TimerEvent: {}
+[2.407178] (-) TimerEvent: {}
+[2.507634] (-) TimerEvent: {}
+[2.608051] (-) TimerEvent: {}
+[2.708406] (-) TimerEvent: {}
+[2.808778] (-) TimerEvent: {}
+[2.909142] (-) TimerEvent: {}
+[3.009476] (-) TimerEvent: {}
+[3.109779] (-) TimerEvent: {}
+[3.210144] (-) TimerEvent: {}
+[3.310497] (-) TimerEvent: {}
+[3.382147] (adapt_display) StderrLine: {'line': b'gmake[2]: *** [CMakeFiles/scan_tracker.dir/build.make:76: CMakeFiles/scan_tracker.dir/src/scan_tracker.cpp.o] Error 1\n'}
+[3.382527] (adapt_display) StderrLine: {'line': b'gmake[1]: *** [CMakeFiles/Makefile2:220: CMakeFiles/scan_tracker.dir/all] Error 2\n'}
+[3.382851] (adapt_display) StderrLine: {'line': b'gmake: *** [Makefile:146: all] Error 2\n'}
+[3.384901] (adapt_display) CommandEnded: {'returncode': 2}
+[3.391692] (adapt_display) JobEnded: {'identifier': 'adapt_display', 'rc': 2}
+[3.402113] (-) EventReactorShutdown: {}

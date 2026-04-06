@@ -1,0 +1,58 @@
+[0.011s] Invoking command in '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display -- -j12 -l12
+[0.067s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.176s] -- Found rclcpp: 16.0.18 (/opt/ros/humble/share/rclcpp/cmake)
+[0.204s] -- Found rosidl_generator_c: 3.1.8 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.206s] -- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.212s] -- Found rosidl_generator_cpp: 3.1.8 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.220s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.231s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.258s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.260s] -- Found rmw_fastrtps_cpp: 6.2.10 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+[0.350s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.391s] -- Found rclpy: 3.3.21 (/opt/ros/humble/share/rclpy/cmake)
+[0.391s] -- Found sensor_msgs: 4.9.1 (/opt/ros/humble/share/sensor_msgs/cmake)
+[0.455s] -- Found ament_lint_auto: 0.12.15 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[0.510s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[0.510s] -- Configured cppcheck include dirs: $<BUILD_INTERFACE:/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/include>
+[0.510s] -- Configured cppcheck exclude dirs and/or files: 
+[0.511s] -- Added test 'flake8' to check Python code syntax and style conventions
+[0.511s] -- Added test 'lint_cmake' to check CMake code style
+[0.512s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[0.514s] -- Added test 'uncrustify' to check C / C++ code style
+[0.515s] -- Configured uncrustify additional arguments: 
+[0.515s] -- Added test 'xmllint' to check XML markup files
+[0.516s] -- Configuring done
+[0.527s] -- Generating done
+[0.532s] -- Build files have been written to: /home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display
+[0.562s] [35m[1mConsolidate compiler generated dependencies of target scan_tracker[0m
+[0.562s] [35m[1mConsolidate compiler generated dependencies of target cpp_node[0m
+[0.577s] [  0%] Built target ament_cmake_python_copy_adapt_display
+[0.592s] [ 50%] Built target cpp_node
+[0.593s] [ 75%] [32mBuilding CXX object CMakeFiles/scan_tracker.dir/src/scan_tracker.cpp.o[0m
+[0.726s] running egg_info
+[0.726s] writing adapt_display.egg-info/PKG-INFO
+[0.726s] writing dependency_links to adapt_display.egg-info/dependency_links.txt
+[0.726s] writing top-level names to adapt_display.egg-info/top_level.txt
+[0.728s] reading manifest file 'adapt_display.egg-info/SOURCES.txt'
+[0.729s] writing manifest file 'adapt_display.egg-info/SOURCES.txt'
+[0.761s] [ 75%] Built target ament_cmake_python_build_adapt_display_egg
+[2.291s] [01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:[m[K In constructor ‘[01m[KScanTrackerNode::ScanTrackerNode()[m[K’:
+[2.291s] [01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:45:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kcount_publisher_[m[K’ was not declared in this scope; did you mean ‘[01m[Kcount_publishers[m[K’?
+[2.291s]    45 |     [01;31m[Kcount_publisher_[m[K = this->create_publisher<std_msgs::msg::Int32>(
+[2.292s]       |     [01;31m[K^~~~~~~~~~~~~~~~[m[K
+[2.292s]       |     [32m[Kcount_publishers[m[K
+[2.298s] [01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:47:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kpositions_publisher_[m[K’ was not declared in this scope
+[2.299s]    47 |     [01;31m[Kpositions_publisher_[m[K = this->create_publisher<std_msgs::msg::Float32MultiArray>(
+[2.299s]       |     [01;31m[K^~~~~~~~~~~~~~~~~~~~[m[K
+[2.309s] [01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:[m[K In member function ‘[01m[Kvoid ScanTrackerNode::scan_callback(sensor_msgs::msg::LaserScan_<std::allocator<void> >::SharedPtr)[m[K’:
+[2.310s] [01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:243:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kcount_publisher_[m[K’ was not declared in this scope; did you mean ‘[01m[Kcount_publishers[m[K’?
+[2.310s]   243 |     [01;31m[Kcount_publisher_[m[K->publish(count_msg);
+[2.310s]       |     [01;31m[K^~~~~~~~~~~~~~~~[m[K
+[2.310s]       |     [32m[Kcount_publishers[m[K
+[2.315s] [01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:252:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kpositions_publisher_[m[K’ was not declared in this scope
+[2.315s]   252 |     [01;31m[Kpositions_publisher_[m[K->publish(pos_msg);
+[2.315s]       |     [01;31m[K^~~~~~~~~~~~~~~~~~~~[m[K
+[4.073s] gmake[2]: *** [CMakeFiles/scan_tracker.dir/build.make:76: CMakeFiles/scan_tracker.dir/src/scan_tracker.cpp.o] Error 1
+[4.074s] gmake[1]: *** [CMakeFiles/Makefile2:220: CMakeFiles/scan_tracker.dir/all] Error 2
+[4.074s] gmake: *** [Makefile:146: all] Error 2
+[4.076s] Invoked command in '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display' returned '2': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display -- -j12 -l12

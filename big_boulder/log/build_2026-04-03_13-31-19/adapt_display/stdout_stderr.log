@@ -1,0 +1,30 @@
+[35m[1mConsolidate compiler generated dependencies of target scan_tracker[0m
+[ 50%] Built target cpp_node
+[ 50%] Built target ament_cmake_python_copy_adapt_display
+[ 75%] [32mBuilding CXX object CMakeFiles/scan_tracker.dir/src/scan_tracker.cpp.o[0m
+running egg_info
+writing adapt_display.egg-info/PKG-INFO
+writing dependency_links to adapt_display.egg-info/dependency_links.txt
+writing top-level names to adapt_display.egg-info/top_level.txt
+reading manifest file 'adapt_display.egg-info/SOURCES.txt'
+writing manifest file 'adapt_display.egg-info/SOURCES.txt'
+[ 75%] Built target ament_cmake_python_build_adapt_display_egg
+[01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:[m[K In constructor ‘[01m[KScanTrackerNode::ScanTrackerNode()[m[K’:
+[01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:45:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kcount_publisher_[m[K’ was not declared in this scope; did you mean ‘[01m[Kcount_publishers[m[K’?
+   45 |     [01;31m[Kcount_publisher_[m[K = this->create_publisher<std_msgs::msg::Int32>(
+      |     [01;31m[K^~~~~~~~~~~~~~~~[m[K
+      |     [32m[Kcount_publishers[m[K
+[01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:47:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kpositions_publisher_[m[K’ was not declared in this scope
+   47 |     [01;31m[Kpositions_publisher_[m[K = this->create_publisher<std_msgs::msg::Float32MultiArray>(
+      |     [01;31m[K^~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:[m[K In member function ‘[01m[Kvoid ScanTrackerNode::scan_callback(sensor_msgs::msg::LaserScan_<std::allocator<void> >::SharedPtr)[m[K’:
+[01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:243:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kcount_publisher_[m[K’ was not declared in this scope; did you mean ‘[01m[Kcount_publishers[m[K’?
+  243 |     [01;31m[Kcount_publisher_[m[K->publish(count_msg);
+      |     [01;31m[K^~~~~~~~~~~~~~~~[m[K
+      |     [32m[Kcount_publishers[m[K
+[01m[K/home/abhinav/Projects/Magic_Board/big_boulder/src/adapt_display/src/scan_tracker.cpp:252:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kpositions_publisher_[m[K’ was not declared in this scope
+  252 |     [01;31m[Kpositions_publisher_[m[K->publish(pos_msg);
+      |     [01;31m[K^~~~~~~~~~~~~~~~~~~~[m[K
+gmake[2]: *** [CMakeFiles/scan_tracker.dir/build.make:76: CMakeFiles/scan_tracker.dir/src/scan_tracker.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:220: CMakeFiles/scan_tracker.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2

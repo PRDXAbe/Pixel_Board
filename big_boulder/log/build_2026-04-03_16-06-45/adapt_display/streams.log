@@ -1,0 +1,59 @@
+[0.007s] Invoking command in '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display -- -j12 -l12
+[0.064s] [ 50%] Built target scan_tracker
+[0.064s] [100%] Built target cpp_node
+[0.067s] [100%] Built target ament_cmake_python_copy_adapt_display
+[0.202s] running egg_info
+[0.203s] writing adapt_display.egg-info/PKG-INFO
+[0.203s] writing dependency_links to adapt_display.egg-info/dependency_links.txt
+[0.203s] writing top-level names to adapt_display.egg-info/top_level.txt
+[0.204s] reading manifest file 'adapt_display.egg-info/SOURCES.txt'
+[0.204s] writing manifest file 'adapt_display.egg-info/SOURCES.txt'
+[0.224s] [100%] Built target ament_cmake_python_build_adapt_display_egg
+[0.238s] Invoked command in '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display -- -j12 -l12
+[0.247s] Invoking command in '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display
+[0.254s] -- Install configuration: ""
+[0.254s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/environment/pythonpath.sh
+[0.254s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/environment/pythonpath.dsv
+[0.255s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/local/lib/python3.10/dist-packages/adapt_display-0.0.0-py3.10.egg-info
+[0.255s] -- Installing: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/local/lib/python3.10/dist-packages/adapt_display-0.0.0-py3.10.egg-info/SOURCES.txt
+[0.255s] -- Installing: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/local/lib/python3.10/dist-packages/adapt_display-0.0.0-py3.10.egg-info/top_level.txt
+[0.255s] -- Installing: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/local/lib/python3.10/dist-packages/adapt_display-0.0.0-py3.10.egg-info/dependency_links.txt
+[0.255s] -- Installing: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/local/lib/python3.10/dist-packages/adapt_display-0.0.0-py3.10.egg-info/PKG-INFO
+[0.255s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/local/lib/python3.10/dist-packages/adapt_display
+[0.255s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/local/lib/python3.10/dist-packages/adapt_display/__init__.py
+[0.277s] Listing '/home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/local/lib/python3.10/dist-packages/adapt_display'...
+[0.279s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/lib/adapt_display/py_node.py
+[0.280s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/lib/adapt_display/spawn_single_ball.py
+[0.280s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/lib/adapt_display/spawn_multiple_balls.py
+[0.280s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/lib/adapt_display/remove_balls.py
+[0.280s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/lib/adapt_display/rw_viz.py
+[0.280s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/lib/adapt_display/cpp_node
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/lib/adapt_display/scan_tracker
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/launch
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/launch/launch_simulation.launch.py.backup
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/launch/real_world.launch.py
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/launch/launch_simulation.launch.py
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/launch/display.launch.py
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/config
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/config/gazebo_params.yaml
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/description
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/description/drawing_board.urdf.xacro
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/description/robot.urdf.xacro
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/description/lidar_platform.urdf.xacro
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/description/ball.urdf
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/ament_index/resource_index/package_run_dependencies/adapt_display
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/ament_index/resource_index/parent_prefix_path/adapt_display
+[0.281s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/environment/ament_prefix_path.sh
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/environment/ament_prefix_path.dsv
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/environment/path.sh
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/environment/path.dsv
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/local_setup.bash
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/local_setup.sh
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/local_setup.zsh
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/local_setup.dsv
+[0.282s] -- Installing: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/package.dsv
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/ament_index/resource_index/packages/adapt_display
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/cmake/adapt_displayConfig.cmake
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/cmake/adapt_displayConfig-version.cmake
+[0.282s] -- Up-to-date: /home/abhinav/Projects/Magic_Board/big_boulder/install/adapt_display/share/adapt_display/package.xml
+[0.284s] Invoked command in '/home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/abhinav/Projects/Magic_Board/big_boulder/build/adapt_display

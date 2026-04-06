@@ -1,0 +1,3 @@
+source;share/adapt_display/environment/ament_prefix_path.sh
+source;share/adapt_display/environment/path.sh
+source;share/adapt_display/environment/pythonpath.sh
