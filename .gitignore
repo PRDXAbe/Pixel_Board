@@ -2,11 +2,21 @@
 build/
 install/
 log/
+rw/build/
+rw/install/
+rw/log/
 
 # Python bytecode
 __pycache__/
 *.pyc
 *.pyo
+
+# Kotlin / Gradle
+pixel_board_ui/build/
+pixel_board_ui/.gradle/
+*.class
+*.jar
+!pixel_board_ui/gradle/wrapper/gradle-wrapper.jar
 
 # Backup files
 *.bak
@@ -14,4 +24,5 @@ __pycache__/
 
 # Editor
 .vscode/
+.idea/
 *.swp

@@ -1,9 +1,11 @@
 {
-  "_comment": "Magic Board \u2014 edit via: python3 configure_board.py",
+  "_comment": "Magic Board — edit via: python3 configure_board.py  OR  the PixelBoard UI",
   "board_min_x": 0.05,
   "board_max_x": 1.05,
   "board_min_y": -0.25,
   "board_max_y": 0.25,
+  "board_width_mm": 1000,
+  "board_height_mm": 500,
   "cluster_dist": 0.08,
   "min_pts": 2,
   "match_radius": 0.2,

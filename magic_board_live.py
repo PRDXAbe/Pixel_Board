@@ -10,10 +10,9 @@ What it does:
   • Increments a ball counter each time a new ball lands on the board
 
 How to run:
-  # Terminal 1 — start the LIDAR driver:
+  # Terminal 1 — start the LD19 LiDAR driver:
   source /path/to/rw/install/setup.bash
-  ros2 run sllidar_ros2 sllidar_node \
-      --ros-args -p serial_baudrate:=115200 -p angle_compensate:=true
+  ros2 launch ldlidar_stl_ros2 ld19.launch.py
 
   # Terminal 2 — run this script:
   source /path/to/rw/install/setup.bash
@@ -295,7 +294,7 @@ def main():
             status.set_text(f'Scans received: {node.msg_count}')
             status.set_color('#00cc66')
         else:
-            status.set_text('Waiting for /scan… (is sllidar_node running?)')
+            status.set_text('Waiting for /scan… (is ldlidar_stl_ros2_node running?)')
             status.set_color('#cc3333')
 
     _anim = FuncAnimation(fig, update, interval=40, blit=False,
