@@ -15,10 +15,13 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pixelboard.BoardFrame
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * Top-down LIDAR scan canvas. Coordinate origin (0,0) is the LIDAR itself.
@@ -27,7 +30,11 @@ import kotlin.math.min
  * The view window is padded slightly beyond the board boundaries.
  */
 @Composable
-fun LidarCanvas(frame: BoardFrame, modifier: Modifier = Modifier) {
+fun LidarCanvas(
+    frame: BoardFrame,
+    screenPreview: ImageBitmap?,
+    modifier: Modifier = Modifier,
+) {
 
     Box(
         modifier = modifier
@@ -35,7 +42,7 @@ fun LidarCanvas(frame: BoardFrame, modifier: Modifier = Modifier) {
             .background(Color(0xFF0C0C14)),
         contentAlignment = Alignment.Center,
     ) {
-        if (frame.scanCount == 0) {
+        if (frame.scanCount == 0 && screenPreview == null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Waiting for scan data…", color = TextMuted, fontSize = 14.sp)
                 Spacer(Modifier.height(6.dp))
@@ -45,34 +52,78 @@ fun LidarCanvas(frame: BoardFrame, modifier: Modifier = Modifier) {
         }
 
         Canvas(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-            val w = size.width
-            val h = size.height
+            val canvasWidth = size.width
+            val canvasHeight = size.height
+            val isBottomCenterMount = frame.mountMode.equals("bottom_center", ignoreCase = true)
 
             // ── View window (slightly larger than board) ──────────────────────
-            val padX = (frame.boardMaxX - frame.boardMinX) * 0.15f
-            val padY = (frame.boardMaxY - frame.boardMinY) * 0.35f
+            val boardDepth = frame.boardMaxX - frame.boardMinX
+            val boardSpan = frame.boardMaxY - frame.boardMinY
 
-            val viewMinX = -0.1f
-            val viewMaxX = frame.boardMaxX + padX
-            val viewMinY = frame.boardMinY - padY
-            val viewMaxY = frame.boardMaxY + padY
+            val (viewMinX, viewMaxX, viewMinY, viewMaxY) = if (isBottomCenterMount) {
+                val belowSensorPad = 0.06f
+                val farEdgePad = boardDepth * 0.06f
+                val sidePad = boardSpan * 0.08f
+                arrayOf(
+                    minOf(-belowSensorPad, frame.boardMinX - belowSensorPad),
+                    frame.boardMaxX + farEdgePad,
+                    frame.boardMinY - sidePad,
+                    frame.boardMaxY + sidePad,
+                )
+            } else {
+                val padX = boardDepth * 0.12f
+                val padY = boardSpan * 0.12f
+                arrayOf(
+                    frame.boardMinX - padX,
+                    frame.boardMaxX + padX,
+                    frame.boardMinY - padY,
+                    frame.boardMaxY + padY,
+                )
+            }
+
+            val worldWidth = if (isBottomCenterMount) {
+                viewMaxY - viewMinY
+            } else {
+                viewMaxX - viewMinX
+            }.coerceAtLeast(0.001f)
+            val worldHeight = if (isBottomCenterMount) {
+                viewMaxX - viewMinX
+            } else {
+                viewMaxY - viewMinY
+            }.coerceAtLeast(0.001f)
+
+            val scale = min(canvasWidth / worldWidth, canvasHeight / worldHeight)
+            val contentWidth = worldWidth * scale
+            val contentHeight = worldHeight * scale
+            val contentLeft = (canvasWidth - contentWidth) / 2f
+            val contentTop = (canvasHeight - contentHeight) / 2f
+            val contentRight = contentLeft + contentWidth
+            val contentBottom = contentTop + contentHeight
 
             fun toCanvas(x: Float, y: Float): Offset {
-                val nx = (x - viewMinX) / (viewMaxX - viewMinX)
-                val ny = 1f - (y - viewMinY) / (viewMaxY - viewMinY) // flip Y
-                return Offset(nx * w, ny * h)
+                if (isBottomCenterMount) {
+                    return Offset(
+                        x = contentLeft + (viewMaxY - y) * scale,
+                        y = contentTop + (viewMaxX - x) * scale,
+                    )
+                } else {
+                    return Offset(
+                        x = contentLeft + (x - viewMinX) * scale,
+                        y = contentTop + (viewMaxY - y) * scale,
+                    )
+                }
             }
 
             // ── Background grid ───────────────────────────────────────────────
             drawGrid(toCanvas = ::toCanvas,
                 minX = viewMinX, maxX = viewMaxX,
                 minY = viewMinY, maxY = viewMaxY,
-                w = w, h = h)
+            )
 
             // ── All scan points (dim grey) ────────────────────────────────────
             for ((x, y) in frame.scanPts) {
                 val pt = toCanvas(x, y)
-                if (pt.x < 0 || pt.x > w || pt.y < 0 || pt.y > h) continue
+                if (pt.x < contentLeft || pt.x > contentRight || pt.y < contentTop || pt.y > contentBottom) continue
                 drawCircle(
                     color  = Color(0xFF3A3A5A),
                     radius = 1.5f,
@@ -81,8 +132,37 @@ fun LidarCanvas(frame: BoardFrame, modifier: Modifier = Modifier) {
             }
 
             // ── Board boundary ────────────────────────────────────────────────
-            val tl = toCanvas(frame.boardMinX, frame.boardMaxY)
-            val br = toCanvas(frame.boardMaxX, frame.boardMinY)
+            val tl = if (isBottomCenterMount) {
+                toCanvas(frame.boardMaxX, frame.boardMaxY)
+            } else {
+                toCanvas(frame.boardMinX, frame.boardMaxY)
+            }
+            val br = if (isBottomCenterMount) {
+                toCanvas(frame.boardMinX, frame.boardMinY)
+            } else {
+                toCanvas(frame.boardMaxX, frame.boardMinY)
+            }
+
+            screenPreview?.let { preview ->
+                val boardWidth = (br.x - tl.x).coerceAtLeast(1f)
+                val boardHeight = (br.y - tl.y).coerceAtLeast(1f)
+                val previewScale = min(
+                    boardWidth / preview.width.toFloat().coerceAtLeast(1f),
+                    boardHeight / preview.height.toFloat().coerceAtLeast(1f),
+                )
+                val dstWidth = (preview.width * previewScale).roundToInt().coerceAtLeast(1)
+                val dstHeight = (preview.height * previewScale).roundToInt().coerceAtLeast(1)
+                val dstOffsetX = tl.x.roundToInt() + ((boardWidth - dstWidth) / 2f).roundToInt()
+                val dstOffsetY = tl.y.roundToInt() + ((boardHeight - dstHeight) / 2f).roundToInt()
+                drawImage(
+                    image = preview,
+                    srcOffset = IntOffset.Zero,
+                    srcSize = IntSize(preview.width, preview.height),
+                    dstOffset = IntOffset(dstOffsetX, dstOffsetY),
+                    dstSize = IntSize(dstWidth, dstHeight),
+                    alpha = 0.92f,
+                )
+            }
             drawBoardRect(tl, br)
 
             // ── Board-filtered scan points (white/blue) ───────────────────────
@@ -97,6 +177,12 @@ fun LidarCanvas(frame: BoardFrame, modifier: Modifier = Modifier) {
 
             // ── Touch centroids ───────────────────────────────────────────────
             for (touch in frame.touches) {
+                if (
+                    touch.mx < frame.boardMinX || touch.mx > frame.boardMaxX ||
+                    touch.my < frame.boardMinY || touch.my > frame.boardMaxY
+                ) {
+                    continue
+                }
                 val pt = toCanvas(touch.mx, touch.my)
                 // Outer ring
                 drawCircle(
@@ -133,7 +219,6 @@ private fun DrawScope.drawGrid(
     toCanvas: (Float, Float) -> Offset,
     minX: Float, maxX: Float,
     minY: Float, maxY: Float,
-    w: Float, h: Float,
 ) {
     val minorStep = 0.1f
     val majorStep = 0.5f
@@ -170,7 +255,6 @@ private fun DrawScope.drawGrid(
 }
 
 private fun DrawScope.drawBoardRect(tl: Offset, br: Offset) {
-    val rect  = androidx.compose.ui.geometry.Rect(tl, br)
     val green = BoardGreen
 
     // Filled background

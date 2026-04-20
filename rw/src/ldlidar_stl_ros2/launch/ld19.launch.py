@@ -35,11 +35,12 @@ def generate_launch_description():
         {'port_name': '/dev/ttyUSB0'},
         {'port_baudrate': 230400},
         {'laser_scan_dir': True},
-        {'enable_angle_crop_func': True},
-        {'angle_crop_min': 157.5}, #90 NOTE: THIS ISN"T THE VIEW ANGLE BUT THE HIDE ANGLE.
-# AKA THE ANGLE BETWEEN MIN AND MAX IS HIDDEN RATHER THAN VIEWED. SO INVERT THE ANGLES BEFORE RUNNING.
-        {'angle_crop_max': 202.5}, #270 for 180* of angle masking.
-        {'bins': 455}, # This was taken from rudislabs/ldlidar - pr-binning branch.
+        {'enable_angle_crop_func': False},
+        {'angle_crop_min': 157.5},
+        {'angle_crop_max': 202.5},
+        {'bins': 0},
+        {'enable_internal_filter': True},
+        {'rolling_publish_hz': 0.0},
       ]                # Specifically this is to remove the missing scans errors that appears
                        # a lot while working with ld19 lidar.
   )

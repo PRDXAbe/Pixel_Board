@@ -72,8 +72,11 @@ fun TopBar(state: AppUiState) {
         }
 
         // ── Board dimensions ──────────────────────────────────────────────────
-        val wCm = state.boardConfig.widthMm / 10
-        val hCm = state.boardConfig.heightMm / 10
+        val liveWidthMm = state.frame.boardWidthMm
+        val liveHeightMm = state.frame.boardHeightMm
+        val showLiveBoardDims = state.isConnected && liveWidthMm > 0 && liveHeightMm > 0
+        val wCm = if (showLiveBoardDims) liveWidthMm / 10 else state.boardConfig.widthMm / 10
+        val hCm = if (showLiveBoardDims) liveHeightMm / 10 else state.boardConfig.heightMm / 10
         Text(
             text     = "${wCm}×${hCm} cm",
             fontSize = 12.sp,

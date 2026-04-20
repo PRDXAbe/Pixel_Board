@@ -34,6 +34,15 @@ fun StatusBar(state: AppUiState) {
             StatusItem("Touches", "${frame.touches.size}")
         }
 
+        StatusItem("RunPts", "${state.runCaptureCount}")
+        StatusItem("Interact", if (state.interactiveModeEnabled) "On" else "Off")
+        state.availableDisplays.firstOrNull { it.id == state.selectedDisplayId }?.let { display ->
+            StatusItem("Display", display.name)
+        }
+        state.activeInteractiveTouchId?.let { touchId ->
+            StatusItem("Pointer", "#$touchId")
+        }
+
         StatusItem(
             "Board",
             "X[%.2f…%.2f] Y[%.2f…%.2f]".format(

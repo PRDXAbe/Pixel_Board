@@ -286,6 +286,30 @@ LidarStatus LDLidarDriver::GetLaserScanData(LaserScan& dst, int64_t timeout) {
   }
 }
 
+LidarStatus LDLidarDriver::GetRollingScanData(Points2D& dst, int64_t timeout) {
+  if (!is_start_flag_) {
+    return LidarStatus::STOP;
+  }
+
+  LidarStatus status = comm_pkg_->GetLidarStatus();
+  if (LidarStatus::NORMAL == status) {
+    if (comm_pkg_->GetRollingScanData(dst)) {
+      last_pubdata_times_ = std::chrono::steady_clock::now();
+      return LidarStatus::NORMAL;
+    }
+
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::steady_clock::now() - last_pubdata_times_).count() > timeout) {
+      return LidarStatus::DATA_TIME_OUT;
+    } else {
+      return LidarStatus::DATA_WAIT;
+    }
+  } else {
+    last_pubdata_times_ = std::chrono::steady_clock::now();
+    return status;
+  }
+}
+
 bool  LDLidarDriver::GetLidarScanFreq(double& spin_hz) {
   if (!is_start_flag_) {
     return false;

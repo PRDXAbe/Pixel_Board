@@ -72,6 +72,7 @@ fun MainScreen(viewModel: AppViewModel) {
             // Centre: LIDAR canvas
             LidarCanvas(
                 frame    = state.frame,
+                screenPreview = state.screenPreview.takeIf { state.interactiveModeEnabled },
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(),

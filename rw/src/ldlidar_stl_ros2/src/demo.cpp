@@ -19,6 +19,8 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+
 #include "ros2_api.h"
 #include "ldlidar_driver.h"
 
@@ -49,6 +51,8 @@ int main(int argc, char **argv) {
   setting.y_crop_max = 0.0;
   setting.range_min = 0.03;
   setting.range_max = 25.0;
+  bool enable_internal_filter = true;
+  double rolling_publish_hz = 0.0;
   
   // declare ros2 param
   node->declare_parameter<std::string>("product_name", product_name);
@@ -68,6 +72,8 @@ int main(int argc, char **argv) {
   node->declare_parameter<double>("y_crop_max", setting.y_crop_max);
   node->declare_parameter<double>("range_min", setting.range_min);
   node->declare_parameter<double>("range_max", setting.range_max);
+  node->declare_parameter<bool>("enable_internal_filter", enable_internal_filter);
+  node->declare_parameter<double>("rolling_publish_hz", rolling_publish_hz);
 
   // get ros2 param
   node->get_parameter("product_name", product_name);
@@ -87,6 +93,8 @@ int main(int argc, char **argv) {
   node->get_parameter("y_crop_max", setting.y_crop_max);
   node->get_parameter("range_min", setting.range_min);
   node->get_parameter("range_max", setting.range_max);
+  node->get_parameter("enable_internal_filter", enable_internal_filter);
+  node->get_parameter("rolling_publish_hz", rolling_publish_hz);
 
   ldlidar::LDLidarDriver* ldlidarnode = new ldlidar::LDLidarDriver();
 
@@ -106,6 +114,8 @@ int main(int argc, char **argv) {
   RCLCPP_INFO(node->get_logger(), "<x_crop_max>: %f", setting.x_crop_max);
   RCLCPP_INFO(node->get_logger(), "<y_crop_min>: %f", setting.y_crop_min);
   RCLCPP_INFO(node->get_logger(), "<y_crop_max>: %f", setting.y_crop_max);
+  RCLCPP_INFO(node->get_logger(), "<enable_internal_filter>: %s", (enable_internal_filter?"true":"false"));
+  RCLCPP_INFO(node->get_logger(), "<rolling_publish_hz>: %f", rolling_publish_hz);
 
   if (setting.bins > 0 && setting.bins < 10) {
     RCLCPP_INFO(node->get_logger(), "recommend increasing bin number");
@@ -124,7 +134,7 @@ int main(int argc, char **argv) {
 
   ldlidarnode->RegisterGetTimestampFunctional(std::bind(&GetSystemTimeStamp)); 
 
-  ldlidarnode->EnableFilterAlgorithnmProcess(true);
+  ldlidarnode->EnableFilterAlgorithnmProcess(enable_internal_filter);
 
   if (ldlidarnode->Start(type_name, port_name, serial_port_baudrate, ldlidar::COMM_SERIAL_MODE)) {
     RCLCPP_INFO(node->get_logger(), "ldlidar node start is success");
@@ -141,30 +151,52 @@ int main(int argc, char **argv) {
   }
 
   // create ldlidar data topic and publisher
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher = 
-      node->create_publisher<sensor_msgs::msg::LaserScan>(topic_name, 10);
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher =
+      node->create_publisher<sensor_msgs::msg::LaserScan>(
+          topic_name, rclcpp::SensorDataQoS().keep_last(1));
   
-  rclcpp::WallRate r(10); //10hz
-
   ldlidar::Points2D laser_scan_points;
   double lidar_scan_freq;
+  rclcpp::Time last_rolling_publish_time = node->now();
+  bool rolling_publish_started = false;
   RCLCPP_INFO(node->get_logger(), "Publish topic message:ldlidar scan data.");
   while (rclcpp::ok()) {
-    switch (ldlidarnode->GetLaserScanData(laser_scan_points, 1500)){
-      case ldlidar::LidarStatus::NORMAL: 
-        ldlidarnode->GetLidarScanFreq(lidar_scan_freq);
-        ToLaserscanMessagePublish(laser_scan_points, lidar_scan_freq, setting, node, publisher);
-        break;
-      case ldlidar::LidarStatus::DATA_TIME_OUT:
-        RCLCPP_ERROR(node->get_logger(), "get ldlidar data is time out, please check your lidar device.");
-        break;
-      case ldlidar::LidarStatus::DATA_WAIT:
-        break;
-      default:
-        break;
+    if (rolling_publish_hz > 0.0) {
+      switch (ldlidarnode->GetRollingScanData(laser_scan_points, 1500)) {
+        case ldlidar::LidarStatus::NORMAL: {
+          rclcpp::Time now = node->now();
+          if (!rolling_publish_started ||
+              (now - last_rolling_publish_time).seconds() >= (1.0 / rolling_publish_hz)) {
+            ldlidarnode->GetLidarScanFreq(lidar_scan_freq);
+            ToLaserscanMessagePublish(laser_scan_points, lidar_scan_freq, setting, node, publisher);
+            last_rolling_publish_time = now;
+            rolling_publish_started = true;
+          }
+          break;
+        }
+        case ldlidar::LidarStatus::DATA_TIME_OUT:
+          RCLCPP_ERROR(node->get_logger(), "get ldlidar rolling data is time out, please check your lidar device.");
+          break;
+        case ldlidar::LidarStatus::DATA_WAIT:
+          break;
+        default:
+          break;
+      }
+    } else {
+      switch (ldlidarnode->GetLaserScanData(laser_scan_points, 1500)){
+        case ldlidar::LidarStatus::NORMAL: 
+          ldlidarnode->GetLidarScanFreq(lidar_scan_freq);
+          ToLaserscanMessagePublish(laser_scan_points, lidar_scan_freq, setting, node, publisher);
+          break;
+        case ldlidar::LidarStatus::DATA_TIME_OUT:
+          RCLCPP_ERROR(node->get_logger(), "get ldlidar data is time out, please check your lidar device.");
+          break;
+        case ldlidar::LidarStatus::DATA_WAIT:
+          break;
+        default:
+          break;
+      }
     }
-
-    r.sleep();
   }
 
   ldlidarnode->Stop();
@@ -187,11 +219,17 @@ void  ToLaserscanMessagePublish(ldlidar::Points2D& src,  double lidar_spin_freq,
   static bool first_scan = true;
 
   int beam_size = 0;
+  static int observed_peak_points = 0;
+
+  observed_peak_points = std::max(observed_peak_points, static_cast<int>(src.size()));
 
   if (setting.bins > 0) {
     beam_size = setting.bins;
   } else {
-    beam_size = static_cast<int>(src.size());
+    // Keep a stable angular grid even when we publish rolling partial sweeps.
+    // Using the current partial window size makes the scan resolution wobble
+    // frame-to-frame, which can smear or miss small fast objects.
+    beam_size = std::max(360, observed_peak_points);
   }
 
   start_scan_time = node->now();

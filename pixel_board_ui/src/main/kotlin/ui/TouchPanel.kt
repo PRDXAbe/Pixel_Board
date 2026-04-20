@@ -78,7 +78,10 @@ fun TouchPanel(state: AppUiState, modifier: Modifier = Modifier) {
                 modifier           = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                items(state.frame.touches.take(4)) { touch ->
+                items(
+                    items = state.frame.touches.take(4),
+                    key = { it.id },
+                ) { touch ->
                     TouchCard(
                         touch         = touch,
                         boardWidthMm  = state.frame.boardWidthMm,
@@ -113,6 +116,14 @@ private fun TouchCard(touch: TouchPoint, boardWidthMm: Int, boardHeightMm: Int) 
             .border(1.dp, AccentRed.copy(alpha = 0.35f), shape)
             .padding(12.dp),
     ) {
+        Text(
+            text = "Touch #${touch.id}",
+            fontSize = 10.sp,
+            color = TextMuted,
+            fontFamily = FontFamily.Monospace,
+        )
+        Spacer(Modifier.height(4.dp))
+
         // Large pixel coordinate
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(

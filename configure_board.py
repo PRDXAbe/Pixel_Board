@@ -29,6 +29,18 @@ _DEFAULTS = {
     "recount_frames": 8,
 }
 
+_RAW_EDIT_KEYS = {
+    "board_min_x",
+    "board_max_x",
+    "board_min_y",
+    "board_max_y",
+    "cluster_dist",
+    "min_pts",
+    "match_radius",
+    "forget_frames",
+    "recount_frames",
+}
+
 # ─── ANSI colour helpers ───────────────────────────────────────────────────────
 _USE_COLOUR = sys.stdout.isatty()
 def _c(code, t): return f"\033[{code}m{t}\033[0m" if _USE_COLOUR else t
@@ -45,8 +57,7 @@ def load_config() -> dict:
     cfg = dict(_DEFAULTS)
     if CONFIG_PATH.exists():
         raw = json.loads(CONFIG_PATH.read_text())
-        raw.pop("_comment", None)
-        cfg.update({k: v for k, v in raw.items() if k in _DEFAULTS})
+        cfg.update({k: v for k, v in raw.items() if k != "_comment"})
     else:
         print(yellow(f"  ⚠  {CONFIG_PATH.name} not found — using defaults."))
     return cfg
@@ -213,6 +224,7 @@ def main() -> None:
     print(bold(cyan("  ╚════════════════════════════════════════╝")))
 
     cfg     = load_config()
+    passthrough = {k: v for k, v in cfg.items() if k not in _RAW_EDIT_KEYS}
     u       = to_user(cfg)
     changed = False
 
@@ -237,7 +249,7 @@ def main() -> None:
                 for e in errs:
                     print(red(f"  ✗  {e}"))
                 continue
-            save_config(from_user(u))
+            save_config({**passthrough, **from_user(u)})
             changed = False
             ans = input(dim("  Press Enter to continue or [q] to quit: ")).strip().lower()
             if ans in ("q", "quit"):

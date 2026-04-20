@@ -50,6 +50,8 @@ _DEFAULTS = {
     "board_max_x":    0.860,
     "board_min_y":   -0.190,
     "board_max_y":    0.190,
+    "invert_scan_x":  False,
+    "invert_scan_y":  True,
     "cluster_dist":   0.08,
     "min_pts":        2,
     "match_radius":   0.20,
@@ -76,6 +78,8 @@ BOARD_MIN_X    = _cfg["board_min_x"]
 BOARD_MAX_X    = _cfg["board_max_x"]
 BOARD_MIN_Y    = _cfg["board_min_y"]
 BOARD_MAX_Y    = _cfg["board_max_y"]
+INVERT_SCAN_X  = bool(_cfg["invert_scan_x"])
+INVERT_SCAN_Y  = bool(_cfg["invert_scan_y"])
 CLUSTER_DIST   = _cfg["cluster_dist"]
 MIN_PTS        = _cfg["min_pts"]
 MATCH_RADIUS   = _cfg["match_radius"]
@@ -127,6 +131,16 @@ class BallTracker:
         return [(t['x'], t['y']) for t in self.tracks if t['present']]
 
 
+def polar_to_xy(r: float, theta: float) -> tuple[float, float]:
+    x = r * math.cos(theta)
+    y = r * math.sin(theta)
+    if INVERT_SCAN_X:
+        x = -x
+    if INVERT_SCAN_Y:
+        y = -y
+    return x, y
+
+
 class ScanNode(Node):
     def __init__(self):
         super().__init__('mb_live')
@@ -150,8 +164,9 @@ class ScanNode(Node):
             if r < msg.range_min or r > msg.range_max:
                 continue
             theta = msg.angle_min + i * msg.angle_increment
-            xs.append(r * math.cos(theta))
-            ys.append(r * math.sin(theta))
+            x, y = polar_to_xy(r, theta)
+            xs.append(x)
+            ys.append(y)
         self.scan_xs   = xs
         self.scan_ys   = ys
         self.msg_count += 1

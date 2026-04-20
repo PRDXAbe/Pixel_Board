@@ -61,6 +61,7 @@ LiPkg::LiPkg()
     timestamp_(0),
     speed_(0),
     is_frame_ready_(false),
+    is_rolling_data_ready_(false),
     is_poweron_comm_normal_(false),
     is_filter_(true),
     lidarstatus_(LidarStatus::NORMAL),
@@ -291,9 +292,42 @@ bool LiPkg::GetLaserScanData(Points2D& out) {
   }
 }
 
+bool LiPkg::IsRollingDataReady(void) {
+  std::lock_guard<std::mutex> lg(mutex_lock1_);
+  return is_rolling_data_ready_;
+}
+
+void LiPkg::ResetRollingDataReady(void) {
+  std::lock_guard<std::mutex> lg(mutex_lock1_);
+  is_rolling_data_ready_ = false;
+}
+
+void LiPkg::SetRollingDataReady(void) {
+  std::lock_guard<std::mutex> lg(mutex_lock1_);
+  is_rolling_data_ready_ = true;
+}
+
+bool LiPkg::GetRollingScanData(Points2D& out) {
+  if (IsRollingDataReady()) {
+    ResetRollingDataReady();
+    {
+      std::lock_guard<std::mutex> lg(mutex_lock2_);
+      out = rolling_scan_data_;
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void LiPkg::SetLaserScanData(Points2D& src) {
   std::lock_guard<std::mutex> lg(mutex_lock2_);
   laser_scan_data_ = src;
+}
+
+void LiPkg::SetRollingScanData(const Points2D& src) {
+  std::lock_guard<std::mutex> lg(mutex_lock2_);
+  rolling_scan_data_ = src;
 }
 
 void LiPkg::RegisterTimestampGetFunctional(std::function<uint64_t(void)> timestamp_handle) {
@@ -320,6 +354,13 @@ LidarStatus LiPkg::GetLidarStatus(void) {
 void LiPkg::CommReadCallback(const char *byte, size_t len) {
   if (this->Parse((uint8_t *)byte, len)) {
     this->AssemblePacket();
+    if (!frame_tmp_.empty()) {
+      Points2D rolling = frame_tmp_;
+      std::sort(rolling.begin(), rolling.end(),
+        [](PointData a, PointData b) { return a.stamp < b.stamp; });
+      SetRollingScanData(rolling);
+      SetRollingDataReady();
+    }
   }
 }
 

@@ -9,11 +9,7 @@ import com.pixelboard.ui.PixelBoardTheme
 import java.io.File
 
 fun main() {
-    // projectRoot is passed by Gradle via -DprojectRoot=...
-    // Fall back to parent of CWD (useful when running: cd pixel_board_ui && ./gradlew run)
-    val projectRoot = System.getProperty("projectRoot")
-        ?: File(System.getProperty("user.dir")).parent
-        ?: System.getProperty("user.dir")
+    val projectRoot = resolveProjectRoot()
 
     val viewModel = AppViewModel(projectRoot)
 
@@ -33,3 +29,46 @@ fun main() {
         }
     }
 }
+
+private fun resolveProjectRoot(): String {
+    val candidates = buildList {
+        System.getProperty("projectRoot")?.let(::add)
+        System.getProperty("user.dir")?.let(::add)
+    }
+
+    candidates.forEach { rawPath ->
+        findProjectRoot(File(rawPath))?.let { return it.absolutePath }
+    }
+
+    return candidates.firstOrNull() ?: "."
+}
+
+private fun findProjectRoot(start: File): File? {
+    val absoluteStart = start.absoluteFile
+
+    searchUpwardForProjectRoot(absoluteStart)?.let { return it }
+
+    // Some IDE/Gradle launch paths pass the parent directory of the repo rather than the
+    // repo root itself. Search a shallow child window so we can still find Pixel_Board.
+    absoluteStart
+        .walkTopDown()
+        .maxDepth(2)
+        .firstOrNull(::isProjectRoot)
+        ?.let { return it.absoluteFile }
+
+    return null
+}
+
+private fun searchUpwardForProjectRoot(start: File): File? {
+    var current: File? = start
+    while (current != null) {
+        if (isProjectRoot(current)) {
+            return current
+        }
+        current = current.parentFile
+    }
+    return null
+}
+
+private fun isProjectRoot(dir: File): Boolean =
+    File(dir, "board_config.json").isFile && File(dir, "pixel_board_ui").isDirectory

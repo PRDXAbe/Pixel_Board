@@ -14,6 +14,7 @@ __pycache__/
 # Kotlin / Gradle
 pixel_board_ui/build/
 pixel_board_ui/.gradle/
+pixel_board_ui/local.properties
 *.class
 *.jar
 !pixel_board_ui/gradle/wrapper/gradle-wrapper.jar
@@ -26,3 +27,5 @@ pixel_board_ui/.gradle/
 .vscode/
 .idea/
 *.swp
+
+.codex
