@@ -40,7 +40,6 @@ class AppViewModel(val projectRoot: String) {
     private var bridgeJob: Job? = null
     private var displayRefreshJob: Job? = null
     private var screenPreviewJob: Job? = null
-    private var interactivePointerJob: Job? = null
     private val runCaptureLock = Any()
     private val runTouchSamples = mutableListOf<RunTouchSample>()
     private val activeRunTouches = mutableMapOf<Int, ActiveRunTouch>()
@@ -48,6 +47,7 @@ class AppViewModel(val projectRoot: String) {
     private var activeInteractiveTouchId: Int? = null
     @Volatile
     private var interactiveGesture: InteractiveGestureSession? = null
+    private var rigidInteractiveCursorState: RigidInteractiveCursorState? = null
     private val pendingTapJobs = mutableSetOf<Job>()
     private var lastUiFramePublishMs: Long = 0L
 
@@ -470,25 +470,30 @@ class AppViewModel(val projectRoot: String) {
         if (currentSession != null) {
             val activeTouch = frame.touches.firstOrNull { it.id == currentSession.touchId }
             if (activeTouch == null) {
+                val cursorState = rigidInteractiveCursorState?.advanceTouchLoss(timestampMs = nowMs)
+                rigidInteractiveCursorState = cursorState
+                if (cursorState?.visiblePositionOrNull() != null) {
+                    activeInteractiveTouchId = currentSession.touchId
+                    return currentSession.touchId
+                }
                 finalizeInteractiveGesture(currentSession, nowMs)
                 return null
             }
 
             val rawScreen = mapTouchToDisplay(activeTouch, selectedDisplay, frame)
-            val currentScreen = stabilizeInteractiveScreenPosition(
-                previousX = currentSession.lastMeasuredScreenX,
-                previousY = currentSession.lastMeasuredScreenY,
-                rawX = rawScreen.first,
-                rawY = rawScreen.second,
+            val cursorState = (rigidInteractiveCursorState ?: RigidInteractiveCursorState.locked(
+                touchId = currentSession.touchId,
+                screenX = rawScreen.first,
+                screenY = rawScreen.second,
+                timestampMs = nowMs,
+            )).advanceVisibleTouch(
+                touchId = currentSession.touchId,
+                rawScreenX = rawScreen.first,
+                rawScreenY = rawScreen.second,
+                timestampMs = nowMs,
             )
-            val pointerVelocity = computeInteractivePointerVelocity(
-                previousMeasuredX = currentSession.lastMeasuredScreenX,
-                previousMeasuredY = currentSession.lastMeasuredScreenY,
-                previousMeasuredAtMs = currentSession.lastMeasuredAtMs,
-                currentMeasuredX = currentScreen.first,
-                currentMeasuredY = currentScreen.second,
-                currentMeasuredAtMs = nowMs,
-            )
+            rigidInteractiveCursorState = cursorState
+            val currentScreen = cursorState.visiblePosition()
             val isUnsafeTarget = shouldSuppressInteractiveTarget(currentScreen.first, currentScreen.second)
             val movedSinceLastMm = hypot(
                 (activeTouch.px - currentSession.lastTouch.px).toDouble(),
@@ -574,8 +579,8 @@ class AppViewModel(val projectRoot: String) {
                 lastMeasuredScreenX = currentScreen.first,
                 lastMeasuredScreenY = currentScreen.second,
                 lastMeasuredAtMs = nowMs,
-                velocityScreenXPxPerMs = pointerVelocity.first,
-                velocityScreenYPxPerMs = pointerVelocity.second,
+                velocityScreenXPxPerMs = 0.0,
+                velocityScreenYPxPerMs = 0.0,
                 dwellAnchorScreenX = if (dwellDoubleClickTriggered) currentScreen.first else dwellAnchorScreenX,
                 dwellAnchorScreenY = if (dwellDoubleClickTriggered) currentScreen.second else dwellAnchorScreenY,
                 dwellAnchorStartedAtMs = if (dwellDoubleClickTriggered) nowMs else dwellAnchorStartedAtMs,
@@ -614,7 +619,6 @@ class AppViewModel(val projectRoot: String) {
             }
             interactiveGesture = updatedSession
             activeInteractiveTouchId = updatedSession.touchId
-            ensureInteractivePointerLoop()
             return updatedSession.touchId
         }
 
@@ -622,7 +626,15 @@ class AppViewModel(val projectRoot: String) {
             releaseInteractivePointer()
             return null
         }
-        val (screenX, screenY) = mapTouchToDisplay(targetTouch, selectedDisplay, frame)
+        val rawScreen = mapTouchToDisplay(targetTouch, selectedDisplay, frame)
+        val cursorState = RigidInteractiveCursorState.locked(
+            touchId = targetTouch.id,
+            screenX = rawScreen.first,
+            screenY = rawScreen.second,
+            timestampMs = nowMs,
+        )
+        rigidInteractiveCursorState = cursorState
+        val (screenX, screenY) = cursorState.visiblePosition()
         val suppressDesktopActions = shouldSuppressInteractiveTarget(screenX, screenY)
         desktopInputController.move(screenX, screenY)
         interactiveGesture = InteractiveGestureSession(
@@ -657,65 +669,14 @@ class AppViewModel(val projectRoot: String) {
             tapActionConsumed = false,
         )
         activeInteractiveTouchId = targetTouch.id
-        ensureInteractivePointerLoop()
         return targetTouch.id
     }
 
-    private fun ensureInteractivePointerLoop() {
-        if (interactivePointerJob?.isActive == true) {
-            return
-        }
-
-        interactivePointerJob = scope.launch {
-            var lastTouchId: Int? = null
-            var lastProjectedX: Int? = null
-            var lastProjectedY: Int? = null
-
-            while (isActive) {
-                val session = interactiveGesture
-                if (session == null) {
-                    lastTouchId = null
-                    lastProjectedX = null
-                    lastProjectedY = null
-                    delay(INTERACTION_POINTER_TICK_MS)
-                    continue
-                }
-
-                if (session.touchId != lastTouchId) {
-                    lastTouchId = session.touchId
-                    lastProjectedX = null
-                    lastProjectedY = null
-                }
-
-                val predictedScreen = predictInteractiveScreenPosition(
-                    measuredX = session.lastMeasuredScreenX,
-                    measuredY = session.lastMeasuredScreenY,
-                    velocityXPxPerMs = session.velocityScreenXPxPerMs,
-                    velocityYPxPerMs = session.velocityScreenYPxPerMs,
-                    elapsedSinceMeasurementMs = System.currentTimeMillis() - session.lastMeasuredAtMs,
-                )
-
-                if (
-                    !session.suppressDesktopActions &&
-                    !shouldSuppressInteractiveTarget(predictedScreen.first, predictedScreen.second) &&
-                    (predictedScreen.first != lastProjectedX || predictedScreen.second != lastProjectedY)
-                ) {
-                    desktopInputController.move(predictedScreen.first, predictedScreen.second)
-                    lastProjectedX = predictedScreen.first
-                    lastProjectedY = predictedScreen.second
-                }
-
-                delay(INTERACTION_POINTER_TICK_MS)
-            }
-        }
-    }
-
     private fun releaseInteractivePointer() {
-        interactivePointerJob?.cancel()
-        interactivePointerJob = null
         desktopInputController.releaseAll()
         activeInteractiveTouchId = null
         interactiveGesture = null
+        rigidInteractiveCursorState = null
     }
 
     private fun cancelPendingTap() {
@@ -748,12 +709,14 @@ class AppViewModel(val projectRoot: String) {
             desktopInputController.mouseUp()
             activeInteractiveTouchId = null
             interactiveGesture = null
+            rigidInteractiveCursorState = null
             return
         }
 
         if (session.tapActionConsumed) {
             activeInteractiveTouchId = null
             interactiveGesture = null
+            rigidInteractiveCursorState = null
             return
         }
 
@@ -774,6 +737,7 @@ class AppViewModel(val projectRoot: String) {
         }
         activeInteractiveTouchId = null
         interactiveGesture = null
+        rigidInteractiveCursorState = null
     }
 
     private fun startHold(

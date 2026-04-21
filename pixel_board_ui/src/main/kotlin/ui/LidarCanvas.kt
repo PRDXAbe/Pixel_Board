@@ -169,8 +169,8 @@ fun LidarCanvas(
             for ((x, y) in frame.boardPts) {
                 val pt = toCanvas(x, y)
                 drawCircle(
-                    color  = Color(0xFFBBCCFF),
-                    radius = 2.5f,
+                    color  = Color(0xFF8FA3D8).copy(alpha = 0.65f),
+                    radius = 2.0f,
                     center = pt,
                 )
             }
@@ -184,6 +184,25 @@ fun LidarCanvas(
                     continue
                 }
                 val pt = toCanvas(touch.mx, touch.my)
+                for ((controlX, controlY) in touch.controlPts) {
+                    val controlPt = toCanvas(controlX, controlY)
+                    drawLine(
+                        color = Color(0xFF66F0FF).copy(alpha = 0.45f),
+                        start = controlPt,
+                        end = pt,
+                        strokeWidth = 1.2f,
+                    )
+                    drawCircle(
+                        color = Color(0xFF66F0FF),
+                        radius = 4.2f,
+                        center = controlPt,
+                    )
+                    drawCircle(
+                        color = Color(0xFF0C0C14),
+                        radius = 1.6f,
+                        center = controlPt,
+                    )
+                }
                 // Outer ring
                 drawCircle(
                     color  = AccentRed.copy(alpha = 0.25f),

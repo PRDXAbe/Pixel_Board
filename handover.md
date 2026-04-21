@@ -62,6 +62,11 @@ These findings matter before any new tuning work:
   `344 x 193 mm` mapped to `1920 x 1080`
   so small physical jitter becomes large pixel motion.
 - Bridge-side motion tracking was updated so coherent motion can move faster while stationary touches stay more locked.
+- Bridge-side hover tracking now uses a soft hover anchor:
+  clusters carry lightweight evidence (`point_count`, `edge_point_count`, `cluster_span_y`, `confidence`)
+  and `TouchTracker` now switches between `settling`, `soft_locked`, and `moving`.
+- Soft hover is intended to reject isolated scan jumps while still breaking out quickly on repeated coherent motion.
+- Confirmed present touches now take priority over absent held touches, so stale ghosts should stop showing once a new confirmed touch is active.
 - UI-side pointer stabilization and prediction were added to reduce visible wobble and latency.
 - PixelBoard self-click suppression was narrowed so it only suppresses clicks while the PixelBoard window is the active foreground window.
 - The current double-click logic has been redesigned from tap-based promotion to dwell-based triggering.
@@ -83,6 +88,18 @@ As of handoff, these values are important:
   `SINGLE_CLICK_DELAY_MS = 1000`
   `DWELL_DOUBLE_CLICK_DURATION_MS = 2000`
   `DWELL_DOUBLE_CLICK_RADIUS_PX = 8.0`
+- current bridge hover heuristics:
+  `min_pts = 3`
+  `forget_frames = 6`
+  `recount_frames = 3`
+  `touch_hold_frames = 2`
+  `touch_confirm_frames = 3`
+  `touch_hover_settle_frames = 3`
+  `touch_hover_soft_radius_m = 0.003`
+  `touch_hover_breakout_radius_m = 0.008`
+  `touch_hover_soft_alpha = 0.1`
+  `touch_hover_outlier_frames = 2`
+  `touch_hover_min_confidence = 0.45`
 
 ## 5. Read These Files In Order
 
@@ -147,6 +164,8 @@ Inspect:
 Checks:
 
 - stationary touches should stay locked enough to avoid obvious drift
+- a single bad scan should not yank a locked hover off target
+- repeated displaced scans should break out of soft lock quickly
 - coherent movement should not lag badly behind the real motion
 - touch IDs should not churn excessively during normal use
 

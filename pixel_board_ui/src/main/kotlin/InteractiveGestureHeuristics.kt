@@ -1,9 +1,7 @@
 package com.pixelboard
 
 import java.awt.Frame
-import kotlin.math.abs
 import kotlin.math.hypot
-import kotlin.math.roundToInt
 
 internal const val SINGLE_CLICK_DELAY_MS = 1_000L
 internal const val DWELL_DOUBLE_CLICK_DURATION_MS = 2_000L
@@ -18,21 +16,13 @@ internal const val INTERACTION_RELEASE_DRIFT_MAX_MM = 10.0
 internal const val UI_FRAME_PUBLISH_INTERVAL_MS = 33L
 internal const val INTERACTION_POINTER_TICK_MS = 16L
 
-private const val INTERACTION_POINTER_DEADBAND_X_PX = 8
-private const val INTERACTION_POINTER_DEADBAND_Y_PX = 6
-private const val INTERACTION_POINTER_PREDICTION_HORIZON_MS = 50L
-private const val INTERACTION_POINTER_MAX_LEAD_PX = 48
-
 internal fun stabilizeInteractiveScreenPosition(
     previousX: Int,
     previousY: Int,
     rawX: Int,
     rawY: Int,
-): Pair<Int, Int> {
-    val keepX = abs(rawX - previousX) <= INTERACTION_POINTER_DEADBAND_X_PX
-    val keepY = abs(rawY - previousY) <= INTERACTION_POINTER_DEADBAND_Y_PX
-    return (if (keepX) previousX else rawX) to (if (keepY) previousY else rawY)
-}
+): Pair<Int, Int> =
+    rawX to rawY
 
 internal fun isTapFrameConfirmationSatisfied(
     seenFrames: Int,
@@ -103,16 +93,5 @@ internal fun predictInteractiveScreenPosition(
     velocityXPxPerMs: Double,
     velocityYPxPerMs: Double,
     elapsedSinceMeasurementMs: Long,
-): Pair<Int, Int> {
-    val leadMs = elapsedSinceMeasurementMs
-        .coerceAtLeast(0L)
-        .coerceAtMost(INTERACTION_POINTER_PREDICTION_HORIZON_MS)
-        .toDouble()
-    val leadX = (velocityXPxPerMs * leadMs)
-        .roundToInt()
-        .coerceIn(-INTERACTION_POINTER_MAX_LEAD_PX, INTERACTION_POINTER_MAX_LEAD_PX)
-    val leadY = (velocityYPxPerMs * leadMs)
-        .roundToInt()
-        .coerceIn(-INTERACTION_POINTER_MAX_LEAD_PX, INTERACTION_POINTER_MAX_LEAD_PX)
-    return (measuredX + leadX) to (measuredY + leadY)
-}
+): Pair<Int, Int> =
+    measuredX to measuredY

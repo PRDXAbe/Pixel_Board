@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 
 class InteractiveGestureHeuristicsTest {
     @Test
-    fun smallPointerWobbleStaysPinned() {
+    fun interactivePointerUsesRawScreenPositionWithoutDeadband() {
         val stabilized = stabilizeInteractiveScreenPosition(
             previousX = 1000,
             previousY = 500,
@@ -16,19 +16,7 @@ class InteractiveGestureHeuristicsTest {
             rawY = 503,
         )
 
-        assertEquals(1000 to 500, stabilized)
-    }
-
-    @Test
-    fun pointerMovesWhenRawTargetEscapesDeadband() {
-        val stabilized = stabilizeInteractiveScreenPosition(
-            previousX = 1000,
-            previousY = 500,
-            rawX = 1012,
-            rawY = 507,
-        )
-
-        assertEquals(1012 to 507, stabilized)
+        assertEquals(1006 to 503, stabilized)
     }
 
     @Test
@@ -115,7 +103,7 @@ class InteractiveGestureHeuristicsTest {
             elapsedSinceMeasurementMs = 120L,
         )
 
-        assertEquals(525 to 290, predicted)
+        assertEquals(500 to 300, predicted)
     }
 
     @Test

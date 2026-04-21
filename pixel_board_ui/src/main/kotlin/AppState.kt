@@ -47,6 +47,7 @@ data class TouchPointJson(
     val py: Int,
     val mx: Float,
     val my: Float,
+    @SerialName("control_pts") val controlPts: List<List<Float>> = emptyList(),
 )
 
 @Serializable
@@ -73,6 +74,7 @@ data class TouchPoint(
     val py: Int,
     val mx: Float,
     val my: Float,
+    val controlPts: List<Pair<Float, Float>> = emptyList(),
 )
 
 @Serializable
@@ -158,7 +160,16 @@ data class AppUiState(
 fun BoardFrameJson.toUiFrame() = BoardFrame(
     scanPts      = scanPts.mapNotNull  { if (it.size >= 2) it[0] to it[1] else null },
     boardPts     = boardPts.mapNotNull { if (it.size >= 2) it[0] to it[1] else null },
-    touches      = touches.map { TouchPoint(it.id, it.px, it.py, it.mx, it.my) },
+    touches      = touches.map {
+        TouchPoint(
+            it.id,
+            it.px,
+            it.py,
+            it.mx,
+            it.my,
+            it.controlPts.mapNotNull { point -> if (point.size >= 2) point[0] to point[1] else null },
+        )
+    },
     scanCount    = scanCount,
     rateHz       = rateHz,
     boardMinX    = boardMinX,
