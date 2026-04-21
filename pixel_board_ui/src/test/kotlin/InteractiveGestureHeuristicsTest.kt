@@ -30,36 +30,42 @@ class InteractiveGestureHeuristicsTest {
     }
 
     @Test
-    fun doubleTapDetectedWhenWithinRadius() {
+    fun syntheticDoubleClickDetectedWhenSecondTapIsNearAndRecent() {
         assertTrue(
-            isWithinDoubleTapRadius(
+            shouldTriggerSyntheticDoubleClick(
+                previousClickAtMs = 1_000L,
                 firstScreenX = 820,
                 firstScreenY = 460,
-                secondScreenX = 835,
-                secondScreenY = 470,
+                currentClickAtMs = 1_700L,
+                secondScreenX = 826,
+                secondScreenY = 468,
             ),
         )
     }
 
     @Test
-    fun doubleTapNotDetectedWhenOutsideRadius() {
+    fun syntheticDoubleClickNotDetectedWhenOutsideThirtyPixelRadius() {
         assertFalse(
-            isWithinDoubleTapRadius(
+            shouldTriggerSyntheticDoubleClick(
+                previousClickAtMs = 1_000L,
                 firstScreenX = 820,
                 firstScreenY = 460,
-                secondScreenX = 860,
+                currentClickAtMs = 1_700L,
+                secondScreenX = 851,
                 secondScreenY = 460,
             ),
         )
     }
 
     @Test
-    fun doubleTapDetectedAtExactRadius() {
+    fun syntheticDoubleClickDetectedAtExactRadius() {
         // Distance = 30.0 exactly (18^2 + 24^2 = 900, sqrt = 30)
         assertTrue(
-            isWithinDoubleTapRadius(
+            shouldTriggerSyntheticDoubleClick(
+                previousClickAtMs = 1_000L,
                 firstScreenX = 100,
                 firstScreenY = 100,
+                currentClickAtMs = 1_900L,
                 secondScreenX = 118,
                 secondScreenY = 124,
             ),
@@ -67,16 +73,49 @@ class InteractiveGestureHeuristicsTest {
     }
 
     @Test
-    fun doubleTapNotDetectedJustOutsideRadius() {
-        // Distance = ~31.1 (just outside 30)
+    fun syntheticDoubleClickNotDetectedWhenWindowExpires() {
         assertFalse(
-            isWithinDoubleTapRadius(
+            shouldTriggerSyntheticDoubleClick(
+                previousClickAtMs = 1_000L,
                 firstScreenX = 100,
                 firstScreenY = 100,
-                secondScreenX = 120,
+                currentClickAtMs = 6_100L,
+                secondScreenX = 118,
                 secondScreenY = 124,
             ),
         )
+    }
+
+    @Test
+    fun secondNearbyTapBecomesSyntheticDoubleClickAtFirstAnchor() {
+        val decision = decideTapReleaseAction(
+            previousClickAtMs = 1_000L,
+            previousClickScreenX = 820,
+            previousClickScreenY = 460,
+            currentClickAtMs = 1_700L,
+            currentClickScreenX = 826,
+            currentClickScreenY = 468,
+        )
+
+        assertEquals(TapReleaseAction.SYNTHETIC_DOUBLE_CLICK, decision.action)
+        assertEquals(820, decision.targetScreenX)
+        assertEquals(460, decision.targetScreenY)
+    }
+
+    @Test
+    fun firstTapReleaseRemainsSingleClickAtCurrentPoint() {
+        val decision = decideTapReleaseAction(
+            previousClickAtMs = 0L,
+            previousClickScreenX = 0,
+            previousClickScreenY = 0,
+            currentClickAtMs = 1_700L,
+            currentClickScreenX = 826,
+            currentClickScreenY = 468,
+        )
+
+        assertEquals(TapReleaseAction.SINGLE_CLICK, decision.action)
+        assertEquals(826, decision.targetScreenX)
+        assertEquals(468, decision.targetScreenY)
     }
 
     @Test

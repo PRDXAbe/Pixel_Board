@@ -48,7 +48,6 @@ class AppViewModel(val projectRoot: String) {
     @Volatile
     private var interactiveGesture: InteractiveGestureSession? = null
     private var rigidInteractiveCursorState: RigidInteractiveCursorState? = null
-    private val pendingTapJobs = mutableSetOf<Job>()
     private var lastUiFramePublishMs: Long = 0L
     private var lastTapScreenX: Int = 0
     private var lastTapScreenY: Int = 0
@@ -140,7 +139,7 @@ class AppViewModel(val projectRoot: String) {
     fun setInteractiveModeEnabled(enabled: Boolean) {
         if (!enabled) {
             releaseInteractivePointer()
-            cancelPendingTap()
+            clearTapHistory()
         }
         _state.update { current ->
             current.copy(
@@ -159,7 +158,7 @@ class AppViewModel(val projectRoot: String) {
 
     fun selectDisplay(displayId: String) {
         releaseInteractivePointer()
-        cancelPendingTap()
+        clearTapHistory()
         _state.update { current ->
             val boardConfig = current.availableDisplays.firstOrNull { it.id == displayId }
                 ?.let { display -> withStandardScreenSizeIfMissing(current.boardConfig, display) }
@@ -236,7 +235,7 @@ class AppViewModel(val projectRoot: String) {
     fun start() {
         if (_state.value.isDriverRunning) return
         resetRunCapture()
-        cancelPendingTap()
+        clearTapHistory()
         _state.update {
             it.copy(
                 isDriverRunning = true,
@@ -285,7 +284,7 @@ class AppViewModel(val projectRoot: String) {
     fun stop() {
         val finalizedCount = finalizeActiveRunTouches()
         releaseInteractivePointer()
-        cancelPendingTap()
+        clearTapHistory()
         bridgeJob?.cancel()
         bridgeJob = null
         scope.launch(Dispatchers.IO) { processManager.stopAll() }
@@ -640,26 +639,10 @@ class AppViewModel(val projectRoot: String) {
         rigidInteractiveCursorState = null
     }
 
-    private fun cancelPendingTap() {
-        val jobsToCancel = synchronized(pendingTapJobs) {
-            pendingTapJobs.toList().also { pendingTapJobs.clear() }
-        }
-        jobsToCancel.forEach { it.cancel() }
-    }
-
-    private fun schedulePendingTap(screenX: Int, screenY: Int) {
-        val job = scope.launch {
-            delay(DOUBLE_TAP_WINDOW_MS)
-            performClick(screenX, screenY)
-        }
-        synchronized(pendingTapJobs) {
-            pendingTapJobs += job
-        }
-        job.invokeOnCompletion {
-            synchronized(pendingTapJobs) {
-                pendingTapJobs.remove(job)
-            }
-        }
+    private fun clearTapHistory() {
+        lastTapScreenX = 0
+        lastTapScreenY = 0
+        lastTapAtMs = 0L
     }
 
     private fun finalizeInteractiveGesture(
@@ -686,26 +669,57 @@ class AppViewModel(val projectRoot: String) {
                 hoverAnchorFrames = session.hoverAnchorFrames,
             ) &&
             releaseDriftMm <= INTERACTION_RELEASE_DRIFT_MAX_MM
+        appendClickDiag(
+            event = "tap_release_evaluated",
+            fields = mapOf(
+                "touchId" to session.touchId,
+                "isTap" to isTap,
+                "releaseDriftMm" to releaseDriftMm,
+                "seenFrames" to session.seenFrames,
+                "hoverAnchorFrames" to session.hoverAnchorFrames,
+                "suppressDesktopActions" to session.suppressDesktopActions,
+                "hoverAnchorScreenX" to session.hoverAnchorScreenX,
+                "hoverAnchorScreenY" to session.hoverAnchorScreenY,
+                "lastTapAtMs" to lastTapAtMs,
+                "lastTapScreenX" to lastTapScreenX,
+                "lastTapScreenY" to lastTapScreenY,
+                "nowMs" to nowMs,
+            ),
+        )
         if (isTap) {
             val tapScreenX = session.hoverAnchorScreenX
             val tapScreenY = session.hoverAnchorScreenY
-            val isDoubleTap = lastTapAtMs > 0L &&
-                (nowMs - lastTapAtMs) <= DOUBLE_TAP_WINDOW_MS &&
-                isWithinDoubleTapRadius(
-                    firstScreenX = lastTapScreenX,
-                    firstScreenY = lastTapScreenY,
-                    secondScreenX = tapScreenX,
-                    secondScreenY = tapScreenY,
-                )
-            if (isDoubleTap) {
-                cancelPendingTap()
-                performDoubleClick(tapScreenX, tapScreenY)
-                lastTapAtMs = 0L
+            val tapDecision = decideTapReleaseAction(
+                previousClickAtMs = lastTapAtMs,
+                previousClickScreenX = lastTapScreenX,
+                previousClickScreenY = lastTapScreenY,
+                currentClickAtMs = nowMs,
+                currentClickScreenX = tapScreenX,
+                currentClickScreenY = tapScreenY,
+            )
+            appendClickDiag(
+                event = "tap_release_decision",
+                fields = mapOf(
+                    "touchId" to session.touchId,
+                    "decision" to tapDecision.action.name,
+                    "targetScreenX" to tapDecision.targetScreenX,
+                    "targetScreenY" to tapDecision.targetScreenY,
+                    "currentTapScreenX" to tapScreenX,
+                    "currentTapScreenY" to tapScreenY,
+                    "lastTapAtMs" to lastTapAtMs,
+                    "lastTapScreenX" to lastTapScreenX,
+                    "lastTapScreenY" to lastTapScreenY,
+                    "nowMs" to nowMs,
+                ),
+            )
+            if (tapDecision.action == TapReleaseAction.SYNTHETIC_DOUBLE_CLICK) {
+                performDoubleClick(tapDecision.targetScreenX, tapDecision.targetScreenY)
+                clearTapHistory()
             } else {
-                lastTapScreenX = tapScreenX
-                lastTapScreenY = tapScreenY
+                performClick(tapDecision.targetScreenX, tapDecision.targetScreenY)
+                lastTapScreenX = tapDecision.targetScreenX
+                lastTapScreenY = tapDecision.targetScreenY
                 lastTapAtMs = nowMs
-                schedulePendingTap(tapScreenX, tapScreenY)
             }
         }
         activeInteractiveTouchId = null
@@ -755,15 +769,31 @@ class AppViewModel(val projectRoot: String) {
 
     private fun performClick(screenX: Int, screenY: Int) {
         if (shouldSuppressInteractiveTarget(screenX, screenY)) {
+            appendClickDiag(
+                event = "single_click_suppressed",
+                fields = mapOf("screenX" to screenX, "screenY" to screenY),
+            )
             return
         }
+        appendClickDiag(
+            event = "single_click_injected",
+            fields = mapOf("screenX" to screenX, "screenY" to screenY),
+        )
         desktopInputController.click(screenX, screenY)
     }
 
     private fun performDoubleClick(screenX: Int, screenY: Int) {
         if (shouldSuppressInteractiveTarget(screenX, screenY)) {
+            appendClickDiag(
+                event = "double_click_suppressed",
+                fields = mapOf("screenX" to screenX, "screenY" to screenY),
+            )
             return
         }
+        appendClickDiag(
+            event = "double_click_injected",
+            fields = mapOf("screenX" to screenX, "screenY" to screenY),
+        )
         desktopInputController.doubleClick(screenX, screenY)
     }
 
@@ -934,6 +964,37 @@ class AppViewModel(val projectRoot: String) {
         displayRefreshJob?.cancel()
         screenPreviewJob?.cancel()
         scope.cancel()
+    }
+}
+
+private val clickDiagFile = File("/tmp/pixelboard_click_diag.jsonl")
+private val clickDiagLock = Any()
+
+private fun appendClickDiag(
+    event: String,
+    fields: Map<String, Any?>,
+) {
+    val payload = buildString {
+        append("{")
+        append("\"event\":\"")
+        append(event)
+        append("\"")
+        fields.entries.forEach { (key, value) ->
+            append(",\"")
+            append(key)
+            append("\":")
+            append(
+                when (value) {
+                    null -> "null"
+                    is Number, is Boolean -> value.toString()
+                    else -> "\"" + value.toString().replace("\"", "\\\"") + "\""
+                },
+            )
+        }
+        append("}\n")
+    }
+    synchronized(clickDiagLock) {
+        clickDiagFile.appendText(payload)
     }
 }
 
