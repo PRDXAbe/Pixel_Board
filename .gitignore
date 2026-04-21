@@ -13,6 +13,7 @@ __pycache__/
 
 # Kotlin / Gradle
 pixel_board_ui/build/
+pixel_board_ui/bin/
 pixel_board_ui/.gradle/
 pixel_board_ui/local.properties
 *.class

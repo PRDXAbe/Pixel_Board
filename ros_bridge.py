@@ -323,6 +323,7 @@ def cluster_points(xs, ys):
                 if len(position_pts) > 1:
                     ridge_span_y = max(y for _, y in position_pts) - min(y for _, y in position_pts)
             else:
+                position_pts = member_pts
                 touch_x = float(statistics.median(x for x, _ in member_pts))
                 touch_y = float(statistics.median(y for _, y in member_pts))
                 edge_point_count = len(member_pts)
@@ -356,7 +357,7 @@ def cluster_points(xs, ys):
                     "point_count": len(member_pts),
                     "edge_point_count": edge_point_count,
                     "ridge_point_count": ridge_point_count,
-                    "ridge_points": [[float(x), float(y)] for x, y in position_pts],
+                    "ridge_points": [[float(x), float(y)] for x, y in member_pts],
                     "cluster_span_y": cluster_span_y,
                     "confidence": confidence,
                     "localization_quality": localization_quality,
