@@ -50,6 +50,9 @@ class AppViewModel(val projectRoot: String) {
     private var rigidInteractiveCursorState: RigidInteractiveCursorState? = null
     private val pendingTapJobs = mutableSetOf<Job>()
     private var lastUiFramePublishMs: Long = 0L
+    private var lastTapScreenX: Int = 0
+    private var lastTapScreenY: Int = 0
+    private var lastTapAtMs: Long = 0L
 
     init {
         val displays = probeAvailableDisplays()
@@ -534,36 +537,6 @@ class AppViewModel(val projectRoot: String) {
             } else {
                 nowMs
             }
-            val keepDwellAnchor = !isUnsafeTarget &&
-                isWithinDwellDoubleClickRadius(
-                    anchorScreenX = currentSession.dwellAnchorScreenX,
-                    anchorScreenY = currentSession.dwellAnchorScreenY,
-                    currentScreenX = currentScreen.first,
-                    currentScreenY = currentScreen.second,
-                )
-            val dwellAnchorScreenX = if (keepDwellAnchor) {
-                currentSession.dwellAnchorScreenX
-            } else {
-                currentScreen.first
-            }
-            val dwellAnchorScreenY = if (keepDwellAnchor) {
-                currentSession.dwellAnchorScreenY
-            } else {
-                currentScreen.second
-            }
-            val dwellAnchorStartedAtMs = if (keepDwellAnchor) {
-                currentSession.dwellAnchorStartedAtMs
-            } else {
-                nowMs
-            }
-            val dwellDoubleClickTriggered = !isUnsafeTarget &&
-                shouldTriggerDwellDoubleClick(
-                    anchorScreenX = dwellAnchorScreenX,
-                    anchorScreenY = dwellAnchorScreenY,
-                    currentScreenX = currentScreen.first,
-                    currentScreenY = currentScreen.second,
-                    stableElapsedMs = nowMs - dwellAnchorStartedAtMs,
-                )
             val baseSession = currentSession.copy(
                 lastTouch = activeTouch,
                 lastScreenX = currentScreen.first,
@@ -581,15 +554,7 @@ class AppViewModel(val projectRoot: String) {
                 lastMeasuredAtMs = nowMs,
                 velocityScreenXPxPerMs = 0.0,
                 velocityScreenYPxPerMs = 0.0,
-                dwellAnchorScreenX = if (dwellDoubleClickTriggered) currentScreen.first else dwellAnchorScreenX,
-                dwellAnchorScreenY = if (dwellDoubleClickTriggered) currentScreen.second else dwellAnchorScreenY,
-                dwellAnchorStartedAtMs = if (dwellDoubleClickTriggered) nowMs else dwellAnchorStartedAtMs,
-                tapActionConsumed = currentSession.tapActionConsumed || dwellDoubleClickTriggered,
             )
-
-            if (dwellDoubleClickTriggered) {
-                performDoubleClick(dwellAnchorScreenX, dwellAnchorScreenY)
-            }
 
             if (baseSession.isButtonDown && isUnsafeTarget) {
                 desktopInputController.mouseUp()
@@ -663,10 +628,6 @@ class AppViewModel(val projectRoot: String) {
             lastMeasuredAtMs = nowMs,
             velocityScreenXPxPerMs = 0.0,
             velocityScreenYPxPerMs = 0.0,
-            dwellAnchorScreenX = screenX,
-            dwellAnchorScreenY = screenY,
-            dwellAnchorStartedAtMs = nowMs,
-            tapActionConsumed = false,
         )
         activeInteractiveTouchId = targetTouch.id
         return targetTouch.id
@@ -688,7 +649,7 @@ class AppViewModel(val projectRoot: String) {
 
     private fun schedulePendingTap(screenX: Int, screenY: Int) {
         val job = scope.launch {
-            delay(SINGLE_CLICK_DELAY_MS)
+            delay(DOUBLE_TAP_WINDOW_MS)
             performClick(screenX, screenY)
         }
         synchronized(pendingTapJobs) {
@@ -713,13 +674,6 @@ class AppViewModel(val projectRoot: String) {
             return
         }
 
-        if (session.tapActionConsumed) {
-            activeInteractiveTouchId = null
-            interactiveGesture = null
-            rigidInteractiveCursorState = null
-            return
-        }
-
         val lastTouch = session.lastTouch
         val releaseDriftMm = hypot(
             (lastTouch.px - session.hoverAnchorTouch.px).toDouble(),
@@ -733,7 +687,26 @@ class AppViewModel(val projectRoot: String) {
             ) &&
             releaseDriftMm <= INTERACTION_RELEASE_DRIFT_MAX_MM
         if (isTap) {
-            schedulePendingTap(session.hoverAnchorScreenX, session.hoverAnchorScreenY)
+            val tapScreenX = session.hoverAnchorScreenX
+            val tapScreenY = session.hoverAnchorScreenY
+            val isDoubleTap = lastTapAtMs > 0L &&
+                (nowMs - lastTapAtMs) <= DOUBLE_TAP_WINDOW_MS &&
+                isWithinDoubleTapRadius(
+                    firstScreenX = lastTapScreenX,
+                    firstScreenY = lastTapScreenY,
+                    secondScreenX = tapScreenX,
+                    secondScreenY = tapScreenY,
+                )
+            if (isDoubleTap) {
+                cancelPendingTap()
+                performDoubleClick(tapScreenX, tapScreenY)
+                lastTapAtMs = 0L
+            } else {
+                lastTapScreenX = tapScreenX
+                lastTapScreenY = tapScreenY
+                lastTapAtMs = nowMs
+                schedulePendingTap(tapScreenX, tapScreenY)
+            }
         }
         activeInteractiveTouchId = null
         interactiveGesture = null
@@ -1024,10 +997,6 @@ private data class InteractiveGestureSession(
     val lastMeasuredAtMs: Long,
     val velocityScreenXPxPerMs: Double,
     val velocityScreenYPxPerMs: Double,
-    val dwellAnchorScreenX: Int,
-    val dwellAnchorScreenY: Int,
-    val dwellAnchorStartedAtMs: Long,
-    val tapActionConsumed: Boolean,
 )
 
 private data class BoardDisplayMapping(

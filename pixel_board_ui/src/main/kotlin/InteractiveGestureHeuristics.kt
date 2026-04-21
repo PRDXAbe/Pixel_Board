@@ -3,9 +3,8 @@ package com.pixelboard
 import java.awt.Frame
 import kotlin.math.hypot
 
-internal const val SINGLE_CLICK_DELAY_MS = 1_000L
-internal const val DWELL_DOUBLE_CLICK_DURATION_MS = 2_000L
-internal const val DWELL_DOUBLE_CLICK_RADIUS_PX = 8.0
+internal const val DOUBLE_TAP_WINDOW_MS = 300L
+internal const val DOUBLE_TAP_RADIUS_PX = 30.0
 internal const val LONG_PRESS_DURATION_MS = 420L
 internal const val HOLD_MAX_MOVEMENT_MM = 14.0
 internal const val HOLD_STATIONARY_RADIUS_MM = 6.0
@@ -31,9 +30,6 @@ internal fun isTapFrameConfirmationSatisfied(
     seenFrames >= INTERACTION_TAP_CONFIRM_FRAMES &&
         hoverAnchorFrames >= INTERACTION_HOVER_ANCHOR_CONFIRM_FRAMES
 
-internal fun isSingleClickDelayElapsed(elapsedMs: Long): Boolean =
-    elapsedMs >= SINGLE_CLICK_DELAY_MS
-
 internal fun shouldUsePixelBoardWindowSuppression(
     title: String,
     isShowing: Boolean,
@@ -45,31 +41,16 @@ internal fun shouldUsePixelBoardWindowSuppression(
         (extendedState and Frame.ICONIFIED) == 0 &&
         isActive
 
-internal fun isWithinDwellDoubleClickRadius(
-    anchorScreenX: Int,
-    anchorScreenY: Int,
-    currentScreenX: Int,
-    currentScreenY: Int,
+internal fun isWithinDoubleTapRadius(
+    firstScreenX: Int,
+    firstScreenY: Int,
+    secondScreenX: Int,
+    secondScreenY: Int,
 ): Boolean =
     hypot(
-        (currentScreenX - anchorScreenX).toDouble(),
-        (currentScreenY - anchorScreenY).toDouble(),
-    ) <= DWELL_DOUBLE_CLICK_RADIUS_PX
-
-internal fun shouldTriggerDwellDoubleClick(
-    anchorScreenX: Int,
-    anchorScreenY: Int,
-    currentScreenX: Int,
-    currentScreenY: Int,
-    stableElapsedMs: Long,
-): Boolean =
-    stableElapsedMs >= DWELL_DOUBLE_CLICK_DURATION_MS &&
-        isWithinDwellDoubleClickRadius(
-            anchorScreenX = anchorScreenX,
-            anchorScreenY = anchorScreenY,
-            currentScreenX = currentScreenX,
-            currentScreenY = currentScreenY,
-        )
+        (secondScreenX - firstScreenX).toDouble(),
+        (secondScreenY - firstScreenY).toDouble(),
+    ) <= DOUBLE_TAP_RADIUS_PX
 
 internal fun computeInteractivePointerVelocity(
     previousMeasuredX: Int,

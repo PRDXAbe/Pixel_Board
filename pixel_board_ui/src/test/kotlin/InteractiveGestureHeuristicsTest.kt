@@ -30,50 +30,51 @@ class InteractiveGestureHeuristicsTest {
     }
 
     @Test
-    fun singleClickDelayHasNotElapsedBeforeOneSecond() {
-        assertFalse(isSingleClickDelayElapsed(900L))
-    }
-
-    @Test
-    fun singleClickDelayElapsesAtOneSecond() {
-        assertTrue(isSingleClickDelayElapsed(1_000L))
-    }
-
-    @Test
-    fun dwellDoubleClickTriggersAfterTwoStableSecondsInsideRadius() {
+    fun doubleTapDetectedWhenWithinRadius() {
         assertTrue(
-            shouldTriggerDwellDoubleClick(
-                anchorScreenX = 820,
-                anchorScreenY = 460,
-                currentScreenX = 825,
-                currentScreenY = 465,
-                stableElapsedMs = 2_000L,
+            isWithinDoubleTapRadius(
+                firstScreenX = 820,
+                firstScreenY = 460,
+                secondScreenX = 835,
+                secondScreenY = 470,
             ),
         )
     }
 
     @Test
-    fun dwellDoubleClickDoesNotTriggerBeforeDuration() {
+    fun doubleTapNotDetectedWhenOutsideRadius() {
         assertFalse(
-            shouldTriggerDwellDoubleClick(
-                anchorScreenX = 820,
-                anchorScreenY = 460,
-                currentScreenX = 825,
-                currentScreenY = 465,
-                stableElapsedMs = 1_999L,
+            isWithinDoubleTapRadius(
+                firstScreenX = 820,
+                firstScreenY = 460,
+                secondScreenX = 860,
+                secondScreenY = 460,
             ),
         )
     }
 
     @Test
-    fun dwellDoubleClickDoesNotTriggerOutsideRadius() {
+    fun doubleTapDetectedAtExactRadius() {
+        // Distance = 30.0 exactly (18^2 + 24^2 = 900, sqrt = 30)
+        assertTrue(
+            isWithinDoubleTapRadius(
+                firstScreenX = 100,
+                firstScreenY = 100,
+                secondScreenX = 118,
+                secondScreenY = 124,
+            ),
+        )
+    }
+
+    @Test
+    fun doubleTapNotDetectedJustOutsideRadius() {
+        // Distance = ~31.1 (just outside 30)
         assertFalse(
-            shouldTriggerDwellDoubleClick(
-                anchorScreenX = 820,
-                anchorScreenY = 460,
-                currentScreenX = 829,
-                currentScreenY = 460,
-                stableElapsedMs = 2_500L,
+            isWithinDoubleTapRadius(
+                firstScreenX = 100,
+                firstScreenY = 100,
+                secondScreenX = 120,
+                secondScreenY = 124,
             ),
         )
     }
